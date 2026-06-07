@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Таблиця активів
+model Asset {
+  id           String   @id @default(uuid())
+  name         String
+  category     String
+  status       String
+  serialNumber String   @unique
+  inventoryId  String   @unique
+  price        Float
+  location     String
+  user         String
+  type         String?  // Додано
+  brand        String?  // Додано
+  model        String?  // Додано
+  specs        String?  // Додано
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("assets")
+}
+
+// Таблиця системних налаштувань
+model SystemSettings {
+  id              Int     @id @default(1)
+  adminName       String  @default("System Admin")
+  adminEmail      String  @default("admin@itasset.com")
+  currency        String  @default("UAH")
+  assetPrefix     String  @default("ITA-")
+  emailNotif      Boolean @default(true)
+  slackNotif      Boolean @default(false)
+  slackWebhook    String  @default("")
+  maintenanceMode Boolean @default(false)
+}
+
+
+// Таблиця серверів (Моніторинг)
+model Server {
+  id        String   @id @default(uuid())
+  name      String
+  ip        String
+  type      String
+  status    String
+  cpu       String
+  ram       String
+  uptime    String
+  createdAt DateTime @default(now())
+
+  @@map("servers")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  time      String
+  actor     String
+  type      String
+  source    String
+  text      String
+  createdAt DateTime @default(now())
+
+  @@map("logs")
+}
+
+// Таблиця тікетів (Служба підтримки)
+model Ticket {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("Відкрито")
+  priority    String   @default("Середній")
+  user        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tickets")
+}
+
+// Таблиця логів безпеки
+model SecurityLog {
+  id        String   @id @default(uuid())
+  event     String
+  ip        String
+  device    String
+  time      String
+  status    String
+  createdAt DateTime @default(now())
+
+  @@map("security_logs")
+}
+
+// Таблиця налаштувань безпеки
+model SecuritySettings {
+  id          Int     @id @default(1)
+  twoFactor   Boolean @default(false)
+  ldapEnabled Boolean @default(false)
+  apiKey      String  @default("")
+
+  @@map("security_settings")
+}
+
+// prisma/schema.prisma
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // Тут буде зберігатися зашифрований хеш, а не сам пароль!
+  role      String   @default("tech") // "admin" або "tech"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model License {
+  id             String    @id @default(cuid())
+  name           String    // Назва ПЗ (наприклад, "Office 365" або "Windows 11")
+  softwareType   String    // Тип (наприклад, "Підписка", "Одноразовий ключ", "Open Source")
+  licenseKey     String?   // Сам ключ (може бути пустим, якщо це просто хмарна підписка)
+  totalSeats     Int       // Скільки всього робочих місць/активацій куплено
+  usedSeats      Int       @default(0) // Скільки вже роздано користувачам
+  expirationDate DateTime? // Дата закінчення ліцензії (може бути пустою, якщо вічна)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("licenses")
+}
+
+model Employee {
+  id         String   @id @default(uuid())
+  firstName  String
+  lastName   String
+  email      String   @unique
+  position   String   
+  department String   
+  status     String   @default("Активний") 
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("employees") 
+}
