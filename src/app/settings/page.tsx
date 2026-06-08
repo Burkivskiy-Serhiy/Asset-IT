@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/context/SettingsContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SettingsPage() {
   const { settings, loading: isContextLoading, refreshSettings } = useSettings();
@@ -310,10 +311,10 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sticky top-0 bg-[#0a0a0a]/80 backdrop-blur-xl z-20 pt-4 pb-4 -mt-4 border-b border-white/5">
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sticky top-0 bg-background/80 backdrop-blur-xl z-20 pt-4 pb-4 -mt-4 border-b border-white/5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Налаштування</h1>
-          <p className="text-muted-foreground text-sm">Глобальна конфігурація обліку активів, безпеки та сповіщень.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1">Налаштування</h1>
+          <p className="text-muted-foreground text-sm font-light">Глобальна конфігурація обліку активів, безпеки та сповіщень.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className={`flex items-center gap-2 text-sm text-emerald-400 transition-all duration-300 ${showSuccess ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>
@@ -322,7 +323,7 @@ export default function SettingsPage() {
           <Button 
             onClick={handleSaveChanges} 
             disabled={!hasChanges || isSaving}
-            className={`gap-2 transition-all ${hasChanges && !isSaving ? 'bg-primary hover:bg-primary/90 text-white shadow-[0_0_15px_rgba(var(--primary),0.3)]' : 'bg-white/5 text-gray-400'}`}
+            className={`gap-2 transition-all duration-300 ${hasChanges && !isSaving ? 'bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(var(--primary),0.5)] hover:shadow-[0_0_30px_rgba(var(--primary),0.8)]' : 'bg-white/5 text-gray-400'}`}
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             Зберегти
@@ -362,7 +363,7 @@ export default function SettingsPage() {
         {activeTab === 'general' && (
           <>
             <div className="lg:col-span-7 space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
-              <Card className="glass-panel border-none bg-[#141416]/60 backdrop-blur-md">
+              <Card className="glass-panel border-none">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <Globe2 size={20} className="text-emerald-400" /> Регіональні налаштування
@@ -386,7 +387,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="glass-panel border-none bg-[#141416]/60 backdrop-blur-md">
+              <Card className="glass-panel border-none">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <Bell size={20} className="text-amber-400" /> Інтеграції та Сповіщення
@@ -429,7 +430,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="lg:col-span-5 space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
-              <Card className="glass-panel border-none bg-[#141416]/60 backdrop-blur-md">
+              <Card className="glass-panel border-none">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <HardDrive size={20} className="text-blue-400" /> Ресурси системи
@@ -462,7 +463,7 @@ export default function SettingsPage() {
 
         {activeTab === 'users' && (
           <div className="col-span-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <Card className="glass-panel border-none bg-[#141416]/60 backdrop-blur-md">
+            <Card className="glass-panel border-none">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl text-white flex items-center gap-2">
                   <Users size={20} className="text-blue-400" /> Управління користувачами
@@ -553,7 +554,7 @@ export default function SettingsPage() {
         {activeTab === 'security' && (
           <div className="col-span-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="glass-panel border-none bg-[#141416]/60 backdrop-blur-md">
+              <Card className="glass-panel border-none">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <Database size={20} className="text-purple-400" /> Резервне копіювання
@@ -614,7 +615,7 @@ export default function SettingsPage() {
 
         {activeTab === 'audit' && (
           <div className="col-span-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <Card className="glass-panel border-none bg-[#141416]/60 backdrop-blur-md">
+            <Card className="glass-panel border-none">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl text-white flex items-center gap-2">
                   <ShieldAlert size={20} className="text-amber-400" /> Системні логи

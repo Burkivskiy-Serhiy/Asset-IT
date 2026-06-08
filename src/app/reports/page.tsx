@@ -75,15 +75,15 @@ export default function ReportsPage() {
       `}} />
 
       {/* ПАНЕЛЬ КЕРУВАННЯ */}
-      <div className="mb-8 p-6 bg-gray-800 rounded-lg shadow-md print:hidden flex flex-col sm:flex-row justify-between items-center border border-gray-700">
+      <div className="mb-8 glass-panel p-6 print:hidden flex flex-col sm:flex-row justify-between items-center border-none">
         <div>
-          <h1 className="text-2xl font-bold text-white">Генератор звітів</h1>
-          <p className="text-gray-400 text-sm mt-1">Оберіть параметри та згенеруйте PDF для друку</p>
+          <h1 className="text-3xl font-extrabold text-gradient">Генератор звітів</h1>
+          <p className="text-muted-foreground text-sm mt-1 font-light">Оберіть параметри та згенеруйте PDF для друку</p>
         </div>
         <div className="mt-4 sm:mt-0">
           <button 
             onClick={handlePrint}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium shadow-sm"
+            className="px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-300 font-semibold shadow-[0_0_20px_rgba(var(--primary),0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.7)]"
           >
             🖨 Друк / Зберегти як PDF
           </button>

@@ -33,11 +33,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4 absolute inset-0 z-50">
-      <div className="w-full max-w-md glass-panel p-8 rounded-2xl border border-white/10 bg-[#141416]/80 backdrop-blur-xl shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 absolute inset-0 z-50">
+      {/* Background layer */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-background to-background"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[100px] opacity-60"></div>
+      </div>
+      
+      <div className="relative z-10 w-full max-w-md glass-panel p-8 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Вхід у систему</h1>
-          <p className="text-muted-foreground text-sm">Введіть свої дані для доступу до ІТ-активів</p>
+          <h1 className="text-3xl font-extrabold text-gradient mb-2">Вхід у систему</h1>
+          <p className="text-muted-foreground text-sm font-light">Введіть свої дані для доступу до ІТ-активів</p>
         </div>
 
         {error && (
@@ -85,7 +91,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center mt-2 disabled:opacity-70"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2.5 rounded-lg transition-all duration-300 flex items-center justify-center mt-2 disabled:opacity-70 shadow-[0_0_20px_rgba(var(--primary),0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.7)]"
           >
             {loading ? 'Перевірка...' : 'Увійти'}
           </button>

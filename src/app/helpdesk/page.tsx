@@ -175,8 +175,8 @@ export default function HelpdeskPage() {
     <div className="flex flex-col gap-6 min-h-screen text-white relative">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/5 pb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Служба підтримки</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1">Служба підтримки</h1>
+          <p className="text-muted-foreground text-sm font-light">
             Управління інцидентами під контролем: <span className="text-indigo-400 font-medium">{loading ? '...' : settings.adminName}</span>
           </p>
         </div>
@@ -235,7 +235,7 @@ export default function HelpdeskPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {columns.map(column => (
             <div key={column.id} className="flex flex-col gap-4">
-              <div className="flex items-center justify-between bg-[#141416]/60 backdrop-blur-md p-3 rounded-xl border border-white/5">
+              <div className="flex items-center justify-between glass-panel p-3 border-none">
                 <div className="flex items-center gap-2 text-sm font-semibold tracking-wide uppercase text-gray-300">
                   {getColumnIcon(column.id)} <span>{column.title}</span>
                 </div>
@@ -247,7 +247,7 @@ export default function HelpdeskPage() {
                   {filteredTickets.filter(t => t.status === column.id).map(ticket => (
                     <motion.div 
                       layout key={ticket.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}
-                      className="bg-[#141416]/40 backdrop-blur-sm border border-white/5 p-4 rounded-xl flex flex-col gap-3 hover:border-primary/30 transition-colors shadow-sm group relative"
+                      className="bg-white/[0.03] backdrop-blur-sm border border-white/5 p-4 rounded-xl flex flex-col gap-3 hover:border-primary/30 hover:shadow-[0_0_15px_rgba(var(--primary),0.08)] transition-all duration-300 shadow-sm group relative"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 font-mono"><Ticket size={14} className="text-gray-600" />{ticket.id}</div>

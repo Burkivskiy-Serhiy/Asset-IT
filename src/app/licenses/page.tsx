@@ -115,12 +115,12 @@ export default function LicensesPage() {
       {/* Хідер */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Ліцензії та ПЗ</h1>
-          <p className="text-muted-foreground mt-1">Реальне керування софтом та ключами з бази Neon.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-gradient">Ліцензії та ПЗ</h1>
+          <p className="text-muted-foreground mt-1 font-light">Реальне керування софтом та ключами з бази Neon.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg"
+          className="bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-[0_0_20px_rgba(var(--primary),0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.7)]"
         >
           <Plus size={18} /> Додати ліцензію
         </button>

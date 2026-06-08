@@ -299,8 +299,8 @@ export default function MonitoringPage() {
     <div className="flex flex-col gap-6 min-h-screen text-white relative">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/5 pb-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Моніторинг систем</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1">Моніторинг систем</h1>
+          <p className="text-muted-foreground text-sm font-light">
             Стан інфраструктури под наглядом: <span className="text-indigo-400 font-medium">{loading ? '...' : settings?.adminName}</span>
           </p>
         </div>
@@ -391,28 +391,28 @@ export default function MonitoringPage() {
 
       {/* Швидкі показники */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#141416]/40 border border-white/5 p-4 rounded-xl flex items-center justify-between">
+        <div className="glass-panel p-4 border-none flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 uppercase font-medium">Статус мережі</span>
             <span className="text-xl font-bold mt-1 text-emerald-400 flex items-center gap-1.5"><Wifi size={18} /> Стабільна</span>
           </div>
           <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-400"><Activity size={20} /></div>
         </div>
-        <div className="bg-[#141416]/40 border border-white/5 p-4 rounded-xl flex items-center justify-between">
+        <div className="glass-panel p-4 border-none flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 uppercase font-medium">Вузли в мережі</span>
             <span className="text-xl font-bold mt-1 text-white font-mono">{onlineCount} / {servers.length}</span>
           </div>
           <div className="p-3 rounded-lg bg-blue-500/10 text-blue-400"><Server size={20} /></div>
         </div>
-        <div className="bg-[#141416]/40 border border-white/5 p-4 rounded-xl flex items-center justify-between">
+        <div className="glass-panel p-4 border-none flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 uppercase font-medium">Середнє завантаження CPU</span>
             <span className="text-xl font-bold mt-1 text-white font-mono">{avgCpu}%</span>
           </div>
           <div className="p-3 rounded-lg bg-indigo-500/10 text-indigo-400"><Cpu size={20} /></div>
         </div>
-        <div className="bg-[#141416]/40 border border-white/5 p-4 rounded-xl flex items-center justify-between">
+        <div className="glass-panel p-4 border-none flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 uppercase font-medium">Аномалії / Помилки</span>
             <span className="text-xl font-bold mt-1 text-amber-400 font-mono">{servers.filter(s => s.status === 'warning' || s.status === 'offline').length} активні</span>
@@ -439,7 +439,7 @@ export default function MonitoringPage() {
           ) : (
             <AnimatePresence mode="popLayout">
               {filteredServers.map(server => (
-                <motion.div layout key={server.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-[#141416]/40 border border-white/5 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-white/10 transition-colors group">
+                <motion.div layout key={server.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="glass-panel p-4 border-none flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-white/10 transition-all duration-300 group">
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-white/5 border border-white/5 text-gray-400 group-hover:text-primary transition-colors mt-0.5"><Server size={18} /></div>
                     <div>

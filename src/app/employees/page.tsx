@@ -228,14 +228,14 @@ export default function EmployeesPage() {
   return (
     <div className="flex flex-col gap-8 pb-10 max-w-7xl mx-auto">
       {/* Шапка */}
-      <header className="border-b border-white/5 pb-4 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sticky top-0 bg-[#0a0a0a]/80 backdrop-blur-xl z-20 pt-4 -mt-4">
+      <header className="border-b border-white/5 pb-4 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sticky top-0 bg-background/80 backdrop-blur-xl z-20 pt-4 -mt-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1 flex items-center gap-3">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1 flex items-center gap-3">
             <Users size={28} className="text-blue-400" /> Співробітники
           </h1>
-          <p className="text-muted-foreground text-sm">Управління персоналом та закріпленими за ними активами (Neon DB).</p>
+          <p className="text-muted-foreground text-sm font-light">Управління персоналом та закріпленими за ними активами (Neon DB).</p>
         </div>
-        <Button onClick={handleOpenAdd} className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-[0_0_15px_rgba(var(--primary),0.3)]">
+        <Button onClick={handleOpenAdd} className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(var(--primary),0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.7)] transition-all duration-300">
           <Plus size={16} /> Додати співробітника
         </Button>
       </header>
@@ -345,7 +345,7 @@ export default function EmployeesPage() {
       </div>
 
       {/* Таблиця */}
-      <Card className="glass-panel border-none bg-[#141416]/60 backdrop-blur-md overflow-hidden">
+      <Card className="glass-panel border-none overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left text-gray-300">
             <thead className="text-xs uppercase bg-white/5 text-gray-400 border-b border-white/10">

@@ -217,14 +217,14 @@ export default function AssetsPage() {
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Каталог ІТ-активів</h1>
-          <p className="text-muted-foreground mt-2">Централізований реєстр обладнання</p>
+          <h1 className="text-4xl font-extrabold text-gradient tracking-tight">Каталог ІТ-активів</h1>
+          <p className="text-muted-foreground mt-2 font-light">Централізований реєстр обладнання</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* ФОРМА */}
-        <div className="glass-panel p-6 h-fit sticky top-4 border border-white/5 rounded-xl bg-black/20 backdrop-blur-md">
+        <div className="glass-panel p-6 h-fit sticky top-4 border-none">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <Plus size={20} className={isEditing ? "text-amber-400" : "text-primary"} />
@@ -303,8 +303,8 @@ export default function AssetsPage() {
               <textarea rows={2} value={formData.specs} onChange={e => setFormData({...formData, specs: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none"></textarea>
             </div>
 
-            <button type="submit" className={`w-full font-medium py-2 rounded-lg mt-2 transition-colors text-white ${
-              isEditing ? 'bg-amber-500 hover:bg-amber-600' : 'bg-primary hover:bg-primary/90'
+            <button type="submit" className={`w-full font-medium py-2.5 rounded-lg mt-2 transition-all duration-300 text-white ${
+              isEditing ? 'bg-amber-500 hover:bg-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-primary hover:bg-primary/90 shadow-[0_0_20px_rgba(var(--primary),0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.7)]'
             }`}>
               {isEditing ? 'Зберегти зміни' : 'Зберегти в каталог'}
             </button>
@@ -312,7 +312,7 @@ export default function AssetsPage() {
         </div>
 
         {/* ТАБЛИЦЯ ТА ПАНЕЛЬ ФІЛЬТРІВ */}
-        <div className="lg:col-span-2 glass-panel p-6 border border-white/5 rounded-xl bg-black/20 backdrop-blur-md">
+        <div className="lg:col-span-2 glass-panel p-6 border-none">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />

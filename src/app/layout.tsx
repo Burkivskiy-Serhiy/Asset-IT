@@ -82,6 +82,8 @@ function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import Header from "@/components/layout/Header";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -93,11 +95,20 @@ export default function RootLayout({
         <AuthProvider>
           <SettingsProvider>
             <MaintenanceGuard>
-              <div className="layout-wrapper">
+              <div className="layout-wrapper flex h-screen bg-background text-foreground">
                 <Sidebar />
-                <main className="main-content">
-                  {children}
-                </main>
+                <div className="flex flex-col flex-1 w-full overflow-hidden relative">
+                  {/* Premium Animated Background Layer */}
+                  <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] mix-blend-screen animate-pulse"></div>
+                  </div>
+                  
+                  <Header />
+                  
+                  <main className="flex-1 overflow-y-auto p-6 lg:p-8 z-10 custom-scrollbar">
+                    {children}
+                  </main>
+                </div>
               </div>
             </MaintenanceGuard>
           </SettingsProvider>
