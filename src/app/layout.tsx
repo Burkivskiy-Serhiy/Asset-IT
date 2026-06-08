@@ -13,37 +13,30 @@ function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
-  // 1. Поки завантажується конфігурація бази або сесія NextAuth — нічого не блокуємо
   if (loading || status === "loading") {
     return null; 
   }
 
-  // 2. БЕЗПЕЧНА ПЕРЕВІРКА РОЛІ (Приводимо до UPPERCASE для захисту від помилок регістру в БД)
   const userRole = session?.user?.role?.toUpperCase();
   const isAdmin = userRole === "ADMIN";
 
-  // 3. ПОВНИЙ ІМУНІТЕТ ДЛЯ АДМІНІСТРАТОРА: Якщо зайшов адмін, він бачить весь сайт за будь-яких умов
   if (isAdmin) {
     return <>{children}</>;
   }
 
-  // 4. ВИНЯТОК ДЛЯ СТОРІНКИ ВХОДУ: Завжди відкрита для гостей та інших користувачів
   if (pathname === '/login') {
     return <>{children}</>;
   }
 
-  // 5. ДИРЕКТИВА БЛОКУВАННЯ: Якщо увімкнено режим обслуговування (і це НЕ адмін, бо його відсіяв крок 3)
   if (settings?.maintenanceMode) {
     const handleForceLogout = async () => {
       try {
-        // Запит до API для завершення сесії на серверній стороні
+        
         await fetch('/api/auth/signout', { method: 'POST' });
         
-        // Насильне видалення клієнтських куків авторизації
         document.cookie = "next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.cookie = "__Secure-next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         
-        // Жорсткий редирект на сторінку логіну
         window.location.href = '/login';
       } catch (err) {
         window.location.href = '/login';
@@ -86,7 +79,6 @@ function MaintenanceGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // 6. Якщо обслуговування вимкнено — віддаємо стандартний інтерфейс системи
   return <>{children}</>;
 }
 

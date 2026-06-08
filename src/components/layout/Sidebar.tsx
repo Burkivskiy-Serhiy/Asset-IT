@@ -21,7 +21,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-// Структура меню з масивом allowedRoles
 const menuItems = [
   { icon: LayoutDashboard, label: 'Дашборд', href: '/', allowedRoles: ['admin', 'tech', 'user'] },
   { icon: Database, label: 'ІТ-Активи', href: '/assets', allowedRoles: ['admin', 'tech', 'user'] },
@@ -37,18 +36,14 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   
-  // Стан для відображення вікна сповіщень
   const [showNotifications, setShowNotifications] = useState(false);
   
-  // Стан для зберігання реальних сповіщень з БД
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // Завантаження сповіщень з API
   useEffect(() => {
     if (status === 'authenticated') {
       fetchNotifications();
       
-      // Оновлюємо дані кожні 30 секунд
       const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
     }
@@ -99,7 +94,6 @@ export default function Sidebar() {
 
   const markAllAsRead = () => {
     setNotifications(notifications.map(n => ({ ...n, read: true })));
-    // Тут в майбутньому можна додати PATCH запит до API, щоб зберегти статус прочитаного в БД
   };
 
   return (

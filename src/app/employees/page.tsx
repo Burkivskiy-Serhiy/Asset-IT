@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-// 1. Інтерфейси для типізації даних
 interface AssignedAsset {
   id: string;
   name: string;
@@ -124,7 +123,6 @@ export default function EmployeesPage() {
     if (isEditMode && editingId) {
       setEmployees(employees.map(emp => emp.id === editingId ? { ...emp, ...formData } : emp));
       
-      // Логування локального редагування (додамо лог, хоча поки це локально)
       await fetch('/api/logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,7 +154,6 @@ export default function EmployeesPage() {
         });
 
         if (res.ok) {
-          // Логування створення співробітника
           await fetch('/api/logs', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -192,7 +189,6 @@ export default function EmployeesPage() {
         });
 
         if (res.ok) {
-          // Логування видалення співробітника
           if (empToDelete) {
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0];

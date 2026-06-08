@@ -6,10 +6,9 @@ const prisma = globalForPrisma.prisma || new PrismaClient();
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> } // <-- Вказали, що params це Promise
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   try {
-    // Розгортаємо Promise через await, як того вимагає новий Next.js
     const resolvedParams = await params;
     const id = resolvedParams.id;
     

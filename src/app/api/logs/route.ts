@@ -15,10 +15,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    // Додаємо поле actor, яке прийде з фронтенду
     const { id, time, type, source, text, actor } = await req.json();
     
-    // Якщо actor не передано, ставимо 'Система'
     const logActor = actor || 'Система';
 
     const result = await sql`

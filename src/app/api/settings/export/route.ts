@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // Отримуємо абсолютно всі дані згідно з твоєю схемою Prisma
     const assets = await prisma.asset.findMany();
     const tickets = await prisma.ticket.findMany();
     const employees = await prisma.employee.findMany();
@@ -13,7 +12,6 @@ export async function GET() {
     const securityLogs = await prisma.securityLog.findMany();
     const securitySettings = await prisma.securitySettings.findFirst();
 
-    // Формуємо фінальний об'єкт резервної копії
     const backupData = {
       timestamp: new Date().toISOString(),
       systemVersion: '1.0.0',
@@ -35,7 +33,6 @@ export async function GET() {
       }
     };
 
-    // Повертаємо файл із правильними заголовками для автоматичного завантаження
     return new NextResponse(JSON.stringify(backupData, null, 2), {
       status: 200,
       headers: {

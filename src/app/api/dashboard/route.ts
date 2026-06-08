@@ -7,7 +7,7 @@ const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET() {
   try {
-    // Рахуємо статистику з правильних таблиць (assets та tickets)
+    
     const [
       totalAssetsRes, 
       activeAssetsRes, 

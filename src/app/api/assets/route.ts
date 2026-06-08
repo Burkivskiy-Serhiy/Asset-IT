@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// 1. ОТРИМАННЯ ВСІХ АКТИВІВ
 export async function GET() {
   try {
     const dbAssets = await prisma.asset.findMany({
@@ -19,8 +18,6 @@ export async function GET() {
       model: asset.name.split(' ').slice(1).join(' ') || '-',
       serial_number: asset.serialNumber,
       specs: '',
-      // ДОДАНО: Перетворюємо поле user з БД у поле assignedTo для фронтенду
-      // Якщо в базі 'Не призначено', на фронт віддаємо порожній рядок (тоді покаже "На складі")
       assignedTo: asset.user === 'Не призначено' ? '' : (asset.user || ''),
     }));
 
@@ -31,7 +28,6 @@ export async function GET() {
   }
 }
 
-// 2. СТВОРЕННЯ НОВОГО АКТИВУ
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -54,8 +50,6 @@ export async function POST(request: Request) {
         inventoryId: generatedInventoryId,
         price: 0.0,
         location: 'Головний офіс',
-        // ДОДАНО: Тепер ми беремо співробітника з форми. 
-        // Якщо нікого не вибрали (порожній рядок), пишемо 'Не призначено'
         user: body.assignedTo || 'Не призначено', 
       },
     });

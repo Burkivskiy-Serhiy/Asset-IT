@@ -5,7 +5,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { webhookUrl } = body;
 
-    // Перевіряємо, чи нам взагалі передали посилання і чи схоже воно на вебхук Slack
     if (!webhookUrl || !webhookUrl.startsWith('https://hooks.slack.com/')) {
       return NextResponse.json(
         { error: 'Недійсний або порожній Slack Webhook URL' },
@@ -13,7 +12,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Формуємо структуру повідомлення за допомогою Slack Block Kit
     const slackPayload = {
       blocks: [
         {
@@ -43,7 +41,6 @@ export async function POST(request: Request) {
       ]
     };
 
-    // Відправляємо дані безпосередньо на шлюз Slack
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

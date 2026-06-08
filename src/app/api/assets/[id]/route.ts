@@ -1,11 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
-// НОВЕ: Імпортуємо нашу функцію для Slack
 import { sendSlackNotification } from '@/lib/slack';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// 1. РЕДАГУВАННЯ АКТИВУ (PUT)
 export async function PUT(req: Request, { params }: { params: any }) {
   try {
     const resolvedParams = await params;
@@ -44,13 +42,10 @@ export async function PUT(req: Request, { params }: { params: any }) {
 
     const asset = updatedAsset[0];
 
-    // --- НОВЕ: ВІДПРАВКА В SLACK ПРИ ОНОВЛЕННІ ---
     try {
-      // Дістаємо налаштування з бази (передбачаємо, що у вас є таблиця settings)
       const settingsResult = await sql`SELECT "slackNotif", "slackWebhook" FROM settings LIMIT 1`;
       const settings = settingsResult[0];
 
-      // Якщо Slack увімкнено і є посилання
       if (settings && settings.slackNotif && settings.slackWebhook) {
         const payload = {
           blocks: [
@@ -67,9 +62,7 @@ export async function PUT(req: Request, { params }: { params: any }) {
       }
     } catch (slackError) {
       console.error('Помилка відправки Slack (PUT):', slackError);
-      // Ми не перериваємо код, якщо Slack впав, актив все одно має зберегтися
     }
-    // ---------------------------------------------
 
     const assetWithFrontendFields = {
       ...asset,
@@ -84,7 +77,6 @@ export async function PUT(req: Request, { params }: { params: any }) {
   }
 }
 
-// 2. ВИДАЛЕННЯ АКТИВУ (DELETE)
 export async function DELETE(req: Request, { params }: { params: any }) {
   try {
     const resolvedParams = await params;
@@ -104,7 +96,6 @@ export async function DELETE(req: Request, { params }: { params: any }) {
 
     const asset = deletedAsset[0];
 
-    // --- НОВЕ: ВІДПРАВКА В SLACK ПРИ ВИДАЛЕННІ ---
     try {
       const settingsResult = await sql`SELECT "slackNotif", "slackWebhook" FROM settings LIMIT 1`;
       const settings = settingsResult[0];
@@ -126,7 +117,6 @@ export async function DELETE(req: Request, { params }: { params: any }) {
     } catch (slackError) {
       console.error('Помилка відправки Slack (DELETE):', slackError);
     }
-    // ---------------------------------------------
 
     return NextResponse.json({ message: 'Asset deleted successfully' });
   } catch (error: any) {

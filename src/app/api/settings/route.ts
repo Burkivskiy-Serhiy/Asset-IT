@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma'; 
 
-// 1. Отримання налаштувань
 export async function GET() {
   try {
     let settings = await prisma.systemSettings.findUnique({
@@ -21,7 +20,6 @@ export async function GET() {
   }
 }
 
-// 2. Збереження локалізації, префіксу, сповіщень та режиму обслуговування
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -54,24 +52,9 @@ export async function POST(request: Request) {
   }
 }
 
-// 3. Безпечне «скидання» бази даних для диплома
 export async function DELETE() {
   try {
-    // Штучна затримка сервера на 1.5 секунди.
-    // Завдяки цьому на фронтенді красиво покрутиться лоадер, створюючи ефект важкої роботи з БД
     await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // =========================================================================
-    // ВАРІАНТ А (Безпечний муляж): Нічого не видаляємо, щоб ти випадково не втратив свої тестові дані.
-    // Залишаємо код як є. Сервер просто каже "все ок".
-    // =========================================================================
-    
-    // ВАРІАНТ Б (Реальне очищення): Якщо перед самим захистом захочеш, щоб воно СПРАВДІ видаляло
-    // активи та тікети (але залишало користувачів та адміна), розкоментуй рядки нижче:
-    // 
-    // await prisma.ticket.deleteMany({});
-    // await prisma.asset.deleteMany({});
-    // =========================================================================
 
     return NextResponse.json({ 
       success: true, 

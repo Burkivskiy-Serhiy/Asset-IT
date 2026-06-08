@@ -27,12 +27,10 @@ export default function HelpdeskPage() {
   const [newTicket, setNewTicket] = useState({ title: '', requester: '', priority: 'low' });
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Допоміжна функція для отримання поточного часу рядком HH:MM:SS
   const getCurrentTimeStr = () => {
     return new Date().toTimeString().split(' ')[0];
   };
 
-  // Допоміжна функція для відправки логів
   const logAction = async (type: 'info' | 'warning' | 'error', text: string) => {
     try {
       await fetch('/api/logs', {
@@ -51,7 +49,6 @@ export default function HelpdeskPage() {
     }
   };
 
-  // Завантаження заявок з БД
   useEffect(() => {
     async function fetchTickets() {
       try {
@@ -69,7 +66,6 @@ export default function HelpdeskPage() {
     fetchTickets();
   }, []);
 
-  // Створення нової заявки
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     const ticketData: HelpdeskTicket = {
@@ -81,12 +77,10 @@ export default function HelpdeskPage() {
       time: 'Щойно',
     };
 
-    // Оптимістичне оновлення UI
     setTickets([ticketData, ...tickets]);
     setIsModalOpen(false);
     setNewTicket({ title: '', requester: '', priority: 'low' });
 
-    // Відправка в БД + Логування
     try {
       const res = await fetch('/api/tickets', {
         method: 'POST',
@@ -102,21 +96,17 @@ export default function HelpdeskPage() {
     }
   };
 
-  // Зміна статусу тікета
   const handleMoveStatus = async (id: string, newStatus: 'open' | 'in_progress' | 'resolved') => {
     const currentTicket = tickets.find(t => t.id === id);
     
-    // Мапа статусів для красивого тексту в логах
     const statusNames = {
       open: 'Відкрито / Перевідкрито',
       in_progress: 'В роботі',
       resolved: 'Вирішено'
     };
 
-    // Оптимістичне оновлення UI
     setTickets(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
     
-    // Оновлення в БД + Логування
     try {
       const res = await fetch('/api/tickets', {
         method: 'PUT',
@@ -133,15 +123,12 @@ export default function HelpdeskPage() {
     }
   };
 
-  // Видалення тікета
   const handleDeleteTicket = async (id: string) => {
     const currentTicket = tickets.find(t => t.id === id);
     if (!confirm(`Ви впевнені, що хочете видалити заявку ${id}?`)) return;
 
-    // Оптимістичне оновлення UI
     setTickets(prev => prev.filter(t => t.id !== id));
     
-    // Видалення з БД + Логування
     try {
       const res = await fetch(`/api/tickets?id=${id}`, { method: 'DELETE' });
       if (res.ok && currentTicket) {

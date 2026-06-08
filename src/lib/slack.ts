@@ -1,4 +1,3 @@
-// lib/slack.ts
 export async function sendSlackNotification(webhookUrl: string, payload: any) {
   if (!webhookUrl) {
     console.error("Slack Webhook URL відсутній");

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 
-// Розширена типізація для активів (щоб TS не сварився на гнучкий пошук)
 interface Asset {
   id: string;
   name: string;
@@ -13,7 +12,7 @@ interface Asset {
   serial?: string;
   serial_number?: string;
   sn?: string;
-  user?: any; // може бути текстом або об'єктом зі зв'язаної таблиці
+  user?: any; 
   assignedTo?: string;
   userName?: string;
 }
@@ -31,7 +30,7 @@ export default function ReportsPage() {
       const res = await fetch('/api/assets');
       if (res.ok) {
         const data = await res.json();
-        console.log("Ось що приходить з бази:", data); // <--- Додали вивід у консоль
+        console.log("Ось що приходить з бази:", data); 
         setAssets(data);
       }
     } catch (error) {
@@ -119,10 +118,8 @@ export default function ReportsPage() {
             {assets.length > 0 ? (
               assets.map((asset, index) => {
                 
-                // РОЗУМНИЙ ПОШУК СЕРІЙНОГО НОМЕРА
                 const serial = asset.serialNumber || asset.serial || asset.serial_number || asset.sn || '—';
                 
-                // РОЗУМНИЙ ПОШУК КОРИСТУВАЧА
                 let assignedUser = 'Не призначено';
                 if (typeof asset.user === 'string') {
                   assignedUser = asset.user;

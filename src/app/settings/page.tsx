@@ -16,55 +16,31 @@ import { useSettings } from '@/context/SettingsContext';
 export default function SettingsPage() {
   const { settings, loading: isContextLoading, refreshSettings } = useSettings();
   const [isLoadingPage, setIsLoadingPage] = useState(true);
-
-  // Вкладки
   const [activeTab, setActiveTab] = useState<'general' | 'security' | 'audit' | 'users'>('general');
-  
-  // Стейт для реальних логів
   const [realLogs, setRealLogs] = useState<any[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
-
-  // Стейт для користувачів
   const [users, setUsers] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-
-  // Стейт для модалки створення користувача
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'tech' });
   const [isCreatingUser, setIsCreatingUser] = useState(false);
-
-  
-
-  // Локалізація
   const [currency, setCurrency] = useState('UAH');
   const [assetPrefix, setAssetPrefix] = useState('ITA-');
-
-  // Сповіщення
   const [emailNotif, setEmailNotif] = useState(true);
   const [slackNotif, setSlackNotif] = useState(false);
   const [slackWebhook, setSlackWebhook] = useState('');
   const [isTestingSlack, setIsTestingSlack] = useState(false);
-
-  
-
-  // Безпека та Бекапи
   const [backupInterval, setBackupInterval] = useState('daily');
   const [backupTarget, setBackupTarget] = useState('s3');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [backupSuccess, setBackupSuccess] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-
-  // UI стейти
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  // Стейт для модалки редагування користувача
   const [editingUser, setEditingUser] = useState<any | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUpdatingUser, setIsUpdatingUser] = useState(false);
-
-  // Стейт модального вікна скидання БД
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isResettingDb, setIsResettingDb] = useState(false);
@@ -91,7 +67,6 @@ export default function SettingsPage() {
     }
   }, [currency, assetPrefix, emailNotif, slackNotif, slackWebhook, maintenanceMode, isLoadingPage]);
 
-  // Функція завантаження користувачів
   const fetchUsers = async () => {
     setIsLoadingUsers(true);
     try {
@@ -109,7 +84,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Завантаження реальних логів при відкритті вкладки
   useEffect(() => {
     if (activeTab === 'audit') {
       const fetchLogs = async () => {
@@ -133,14 +107,12 @@ export default function SettingsPage() {
     }
   }, [activeTab]);
 
-  // Завантаження користувачів при відкритті вкладки
   useEffect(() => {
     if (activeTab === 'users') {
       fetchUsers();
     }
   }, [activeTab]);
 
-  // Збереження системних даних
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
@@ -168,28 +140,24 @@ export default function SettingsPage() {
     }
   };
 
-  // Видалення користувача
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Ви впевнені, що хочете назавжди видалити цього користувача?')) return;
     try {
-      // Заміни на свій реальний ендпоінт
-      // await fetch(`/api/users?id=${userId}`, { method: 'DELETE' });
-      setUsers(users.filter(u => u.id !== userId)); // Оновлюємо таблицю локально
+
+      setUsers(users.filter(u => u.id !== userId)); 
     } catch (error) {
       console.error(error);
       alert('Помилка при видаленні.');
     }
   };
 
-  // Оновлення користувача
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdatingUser(true);
     try {
-      // Заміни на свій реальний ендпоінт
-      // await fetch('/api/users', { method: 'PUT', body: JSON.stringify(editingUser) });
+
       setIsEditModalOpen(false);
-      fetchUsers(); // Перезавантажуємо список
+      fetchUsers(); 
     } catch (error) {
       console.error(error);
       alert('Помилка при збереженні.');
@@ -198,7 +166,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Створення нового користувача
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreatingUser(true);
@@ -214,7 +181,7 @@ export default function SettingsPage() {
       if (res.ok) {
         setIsUserModalOpen(false);
         setNewUser({ name: '', email: '', password: '', role: 'tech' });
-        fetchUsers(); // Оновлюємо список
+        fetchUsers(); 
       } else {
         alert(`Помилка: ${data.error || 'Не вдалося створити користувача'}`);
       }
@@ -226,7 +193,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Зміна ролі користувача
   const handleToggleRole = async (userId: string, currentRole: string) => {
     const newRole = currentRole === 'admin' ? 'tech' : 'admin';
     try {
@@ -237,7 +203,6 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        // Оновлюємо локальний стейт, щоб не перевантажувати всю таблицю
         setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
       } else {
         const data = await res.json();
@@ -249,7 +214,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Реальне очищення БД
   const handleExecuteDatabaseReset = async () => {
     setIsResettingDb(true);
     try {
@@ -271,7 +235,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Реальне завантаження бекапу
   const handleCreateBackupNow = async () => {
     setIsBackingUp(true);
     setBackupSuccess(false);
@@ -301,7 +264,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Тест Slack (Реальний запит до API)
   const handleTestSlack = async () => {
     if (!slackWebhook) return alert('Спочатку введіть Webhook URL!');
     setIsTestingSlack(true);
@@ -350,7 +312,7 @@ export default function SettingsPage() {
 
       <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sticky top-0 bg-[#0a0a0a]/80 backdrop-blur-xl z-20 pt-4 pb-4 -mt-4 border-b border-white/5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Налаштування linearization</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Налаштування</h1>
           <p className="text-muted-foreground text-sm">Глобальна конфігурація обліку активів, безпеки та сповіщень.</p>
         </div>
         <div className="flex items-center gap-3">

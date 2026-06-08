@@ -20,15 +20,11 @@ export default function LicensesPage() {
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Поля для нової ліцензії
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('Підписка');
   const [newKey, setNewKey] = useState('');
   const [newSeats, setNewSeats] = useState(1);
   const [newDate, setNewDate] = useState('');
-
-  // Завантаження ліцензій з БД
   const fetchLicenses = async () => {
     try {
       const res = await fetch('/api/licenses');
@@ -44,8 +40,6 @@ export default function LicensesPage() {
   useEffect(() => {
     fetchLicenses();
   }, []);
-
-  // Додавання нової ліцензії в БД
   const handleAddLicense = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -62,27 +56,24 @@ export default function LicensesPage() {
       });
       if (res.ok) {
         setIsModalOpen(false);
-        // Скидаємо форму
         setNewName(''); setNewKey(''); setNewSeats(1); setNewDate('');
-        fetchLicenses(); // Оновлюємо список
+        fetchLicenses(); 
       }
     } catch (e) {
       console.error(e);
     }
   };
 
-  // Видалення ліцензії
   const handleDelete = async (id: string) => {
     if (!confirm('Ви впевнені, що хочете видалити цю ліцензію?')) return;
     try {
-      await fetch(`/api/licenses/${id}`, { method: 'DELETE' }); // Переконайся, що є такий маршрут, або ми його допишемо
+      await fetch(`/api/licenses/${id}`, { method: 'DELETE' }); 
       setLicenses(licenses.filter(l => l.id !== id));
     } catch (e) {
       console.error(e);
     }
   };
 
-  // Функція визначення статусу (для краси)
   const getLicenseStatus = (license: License) => {
     if (!license.expirationDate) return 'active';
     const expDate = new Date(license.expirationDate);
@@ -95,12 +86,10 @@ export default function LicensesPage() {
     return 'active';
   };
 
-  // РЕАЛЬНИЙ РОЗРАХУНОК ВІДЖЕТІВ НА ОСНОВІ ДАНИХ З БД
   const totalLicenses = licenses.length;
   const activeCount = licenses.filter(l => getLicenseStatus(l) === 'active').length;
   const attentionCount = licenses.filter(l => getLicenseStatus(l) !== 'active').length;
 
-  // РЕАЛЬНИЙ ФІЛЬТР ПОШУКУ
   const filteredLicenses = licenses.filter(license =>
     license.name.toLowerCase().includes(search.toLowerCase()) ||
     (license.licenseKey && license.licenseKey.toLowerCase().includes(search.toLowerCase()))

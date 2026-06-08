@@ -5,7 +5,6 @@ const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET() {
   try {
-    // Повертаємо маленькі літери для таблиці, бо ми використали @@map("servers")
     const data = await sql`SELECT * FROM servers ORDER BY "createdAt" ASC`;
     return NextResponse.json(data);
   } catch (error) {

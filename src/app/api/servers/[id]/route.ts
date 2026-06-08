@@ -3,10 +3,8 @@ import { NextResponse } from 'next/server';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// 1. РЕДАГУВАННЯ СЕРВЕРА (PUT)
 export async function PUT(req: Request, { params }: { params: any }) {
   try {
-    // Розгортаємо асинхронні параметри (фікс для Next.js 15+)
     const resolvedParams = await params;
     const id = resolvedParams.id;
 
@@ -40,7 +38,6 @@ export async function PUT(req: Request, { params }: { params: any }) {
   }
 }
 
-// 2. ВИДАЛЕННЯ СЕРВЕРА (DELETE)
 export async function DELETE(req: Request, { params }: { params: any }) {
   try {
     const resolvedParams = await params;

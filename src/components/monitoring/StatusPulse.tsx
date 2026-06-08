@@ -8,7 +8,6 @@ interface MonitoringPulseProps {
 }
 
 export default function MonitoringPulse({ status }: MonitoringPulseProps) {
-  // Визначаємо колір через класи Tailwind для надійності
   const bgColor = 
     status === 'online' ? 'bg-emerald-500' : 
     status === 'warning' ? 'bg-amber-500' : 

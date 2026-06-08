@@ -1,19 +1,16 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// Singleton для PrismaClient, щоб уникнути переповнення пулу з'єднань в Neon
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// 1. ОТРИМАННЯ СПИСКУ КОРИСТУВАЧІВ
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'asc' }
     });
 
-    // Мапимо дані під твій фронтенд, міняючи CamelCase на snake_case для дати
     const formattedUsers = users.map(user => ({
       id: user.id,
       name: user.name,
@@ -29,7 +26,6 @@ export async function GET() {
   }
 }
 
-// 2. СТВОРЕННЯ НОВОГО КОРИСТУВАЧА
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -43,7 +39,7 @@ export async function POST(req: Request) {
       data: {
         name,
         email,
-        password, // Якщо використовується NextAuth або bcrypt, тут варто додавати хеш
+        password,
         role: role || 'tech'
       }
     });
@@ -59,7 +55,6 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('Users POST Error:', error);
     
-    // Перевірка унікальності Email через Prisma Error Code (P2002)
     if (error.code === 'P2002' || error.message?.includes('unique constraint')) {
       return NextResponse.json({ error: 'Користувач з таким Email вже існує' }, { status: 400 });
     }
@@ -67,7 +62,6 @@ export async function POST(req: Request) {
   }
 }
 
-// 3. ЗМІНА РОЛІ (З ЗАХИСТОМ ОСТАННЬОГО АДМІНА)
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
@@ -77,14 +71,11 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'ID та роль є обовʼязковими' }, { status: 400 });
     }
 
-    // Якщо ми намагаємося понизити адміна до техніка
     if (role === 'tech') {
-      // Рахуємо, скільки всього адмінів залишилось в системі
       const adminCount = await prisma.user.count({
         where: { role: 'admin' }
       });
 
-      // Перевіряємо, чи є цей користувач адміном зараз
       const currentUser = await prisma.user.findUnique({
         where: { id },
         select: { role: true }
@@ -98,7 +89,6 @@ export async function PUT(req: Request) {
       }
     }
 
-    // Оновлюємо роль користувача
     const updatedUser = await prisma.user.update({
       where: { id },
       data: { role }
@@ -116,7 +106,6 @@ export async function PUT(req: Request) {
   }
 }
 
-// 4. ВИДАЛЕННЯ КОРИСТУВАЧА (З ЗАХИСТОМ ОСТАННЬОГО АДМІНА)
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -126,7 +115,6 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Не вказано ID користувача' }, { status: 400 });
     }
 
-    // Перевірка на останнього адміна перед видаленням
     const userCheck = await prisma.user.findUnique({
       where: { id },
       select: { role: true }
@@ -145,7 +133,6 @@ export async function DELETE(req: Request) {
       }
     }
 
-    // Видаляємо з бази через Prisma
     await prisma.user.delete({
       where: { id }
     });

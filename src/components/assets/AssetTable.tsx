@@ -11,7 +11,7 @@ import {
   Trash2,
   Edit,
   Check,
-  Download // Додали іконку для завантаження
+  Download 
 } from 'lucide-react';
 import { Asset, AssetStatus, AssetType } from '@/types/asset';
 import {
@@ -71,11 +71,9 @@ export default function AssetTable({ assets = [], onDelete, onEdit }: AssetTable
     return matchesSearch && matchesFilter;
   });
 
-  // Функція для експорту поточної (відфільтрованої) таблиці в Excel/CSV
   const handleExportCSV = () => {
     if (filteredAssets.length === 0) return;
 
-    // Заголовки стовпців (додаємо BOM символ \uFEFF для коректного відображення кирилиці в Excel)
     const headers = ['Назва активу', 'Серійний номер', 'Тип', 'Статус', 'Власник', 'Локація', 'Дата придбання'];
     
     const rows = filteredAssets.map(asset => [

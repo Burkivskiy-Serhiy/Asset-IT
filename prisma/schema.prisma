@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Таблиця активів
 model Asset {
   id           String   @id @default(uuid())
   name         String
@@ -18,17 +17,16 @@ model Asset {
   price        Float
   location     String
   user         String
-  type         String?  // Додано
-  brand        String?  // Додано
-  model        String?  // Додано
-  specs        String?  // Додано
+  type         String?  
+  brand        String?  
+  model        String?  
+  specs        String?  
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
   @@map("assets")
 }
 
-// Таблиця системних налаштувань
 model SystemSettings {
   id              Int     @id @default(1)
   adminName       String  @default("System Admin")
@@ -41,8 +39,6 @@ model SystemSettings {
   maintenanceMode Boolean @default(false)
 }
 
-
-// Таблиця серверів (Моніторинг)
 model Server {
   id        String   @id @default(uuid())
   name      String
@@ -69,7 +65,6 @@ model Log {
   @@map("logs")
 }
 
-// Таблиця тікетів (Служба підтримки)
 model Ticket {
   id          String   @id @default(uuid())
   title       String
@@ -83,7 +78,6 @@ model Ticket {
   @@map("tickets")
 }
 
-// Таблиця логів безпеки
 model SecurityLog {
   id        String   @id @default(uuid())
   event     String
@@ -96,7 +90,6 @@ model SecurityLog {
   @@map("security_logs")
 }
 
-// Таблиця налаштувань безпеки
 model SecuritySettings {
   id          Int     @id @default(1)
   twoFactor   Boolean @default(false)
@@ -106,26 +99,25 @@ model SecuritySettings {
   @@map("security_settings")
 }
 
-// prisma/schema.prisma
 
 model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
-  password  String   // Тут буде зберігатися зашифрований хеш, а не сам пароль!
-  role      String   @default("tech") // "admin" або "tech"
+  password  String   
+  role      String   @default("tech") 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model License {
   id             String    @id @default(cuid())
-  name           String    // Назва ПЗ (наприклад, "Office 365" або "Windows 11")
-  softwareType   String    // Тип (наприклад, "Підписка", "Одноразовий ключ", "Open Source")
-  licenseKey     String?   // Сам ключ (може бути пустим, якщо це просто хмарна підписка)
-  totalSeats     Int       // Скільки всього робочих місць/активацій куплено
-  usedSeats      Int       @default(0) // Скільки вже роздано користувачам
-  expirationDate DateTime? // Дата закінчення ліцензії (може бути пустою, якщо вічна)
+  name           String    
+  softwareType   String    
+  licenseKey     String?   
+  totalSeats     Int       
+  usedSeats      Int       @default(0) 
+  expirationDate DateTime? 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

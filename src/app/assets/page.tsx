@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Database, Laptop, Server, Monitor, Printer, Network, Pencil, Trash2, X, Search, User } from 'lucide-react';
-// Підключаємо хук NextAuth для отримання поточного авторизованого користувача
 import { useSession } from 'next-auth/react';
 
 const getCategoryIcon = (category: string) => {
@@ -18,7 +17,6 @@ const getCategoryIcon = (category: string) => {
 };
 
 export default function AssetsPage() {
-  // Дістаємо дані активного користувача із сесії
   const { data: session } = useSession();
 
   const [assets, setAssets] = useState<any[]>([]);
@@ -119,14 +117,13 @@ export default function AssetsPage() {
           const now = new Date();
           const timeStr = now.toTimeString().split(' ')[0];
           
-          // Визначаємо ім'я або email користувача з сесії (якщо нема - Система)
           const currentActor = session?.user?.name || session?.user?.email || 'Система';
           
           const deleteLog = {
             id: `log-${Date.now()}`,
             time: timeStr,
             type: 'error',
-            actor: currentActor, // ТУТ ВАЖЛИВО: поле має називатися actor, як очікує твоє API
+            actor: currentActor,
             source: 'ASSETS',
             text: `Безповоротно видалено актив: "${assetToDelete.name}" [S/N: ${assetToDelete.serial_number || 'Немає'}]`
           };
@@ -173,14 +170,13 @@ export default function AssetsPage() {
         const logType = isEditing ? 'warning' : 'info';
         const actionText = isEditing ? 'Оновлено дані активу' : 'Додано новий актив';
         
-        // Визначаємо акаунт, який вносить зміни
         const currentActor = session?.user?.name || session?.user?.email || 'Система';
         
         const auditLog = {
           id: `log-${Date.now()}`,
           time: timeStr,
           type: logType,
-          actor: currentActor, // Відправляємо як actor
+          actor: currentActor, 
           source: 'ASSETS',
           text: `${actionText}: "${dataToSend.name}" [Категорія: ${dataToSend.category}]`
         };

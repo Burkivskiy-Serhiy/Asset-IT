@@ -30,7 +30,6 @@ interface LogMessage {
   text: string;
 }
 
-// Функція-помічник для математичного збільшення часу (додає 1 секунду)
 const incrementUptime = (uptimeStr: string) => {
   if (uptimeStr.includes('d') || uptimeStr.includes('days')) return uptimeStr;
 
@@ -68,11 +67,9 @@ export default function MonitoringPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Стейт для додавання
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newServer, setNewServer] = useState({ name: '', ip: '', type: 'api' as ServerNode['type'] });
   
-  // Стейт для редагування
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [serverToEdit, setServerToEdit] = useState<ServerNode | null>(null);
 

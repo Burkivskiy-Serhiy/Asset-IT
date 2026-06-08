@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// Захист від створення сотен з'єднань до Neon під час розробки
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// 1. ОРИМАcolumn ЛІЦЕНЗІЙ
 export async function GET() {
   try {
     const licenses = await prisma.license.findMany({
@@ -19,7 +17,6 @@ export async function GET() {
   }
 }
 
-// 2. СТВОРЕННЯ ЛІЦЕНЗІЇ
 export async function POST(request: Request) {
   try {
     const body = await request.json();

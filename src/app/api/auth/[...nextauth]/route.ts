@@ -4,7 +4,6 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
-// Singleton для PrismaClient, щоб уникнути переповнення пулу з'єднань
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
@@ -26,7 +25,6 @@ const handler = NextAuth({
         const inputPassword = credentials.password;
 
         try {
-          // Шукаємо користувача через Prisma без урахування регістру (заміна LOWER)
           const user = await prisma.user.findFirst({
             where: {
               email: {
@@ -37,14 +35,12 @@ const handler = NextAuth({
           });
 
           if (user) {
-            // Перевіряємо хеш пароля
            const passwordsMatch = inputPassword === user.password;
 
             if (passwordsMatch) {
               const logTime = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
               const actorName = user.name || "System Admin";
 
-              // Записуємо успішний вхід у журнал логів через Prisma
               try {
                 await prisma.log.create({
                   data: {
@@ -66,7 +62,7 @@ const handler = NextAuth({
                 role: user.role, 
               };
             } else {
-              // Лог: неправильний пароль
+              
               try {
                 const logTime = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
                 await prisma.log.create({
@@ -81,7 +77,7 @@ const handler = NextAuth({
               } catch (e) {}
             }
           } else {
-            // Лог: користувача не знайдено
+            
             try {
               const logTime = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
               await prisma.log.create({

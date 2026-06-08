@@ -1,15 +1,13 @@
-// src/types/asset.ts
-
 export type AssetStatus = 'active' | 'maintenance' | 'retired' | 'missing';
 export type AssetType = 'hardware' | 'network' | 'software';
 
 export interface Asset {
   id: string;
-  name: string;          // Назва активу (замість assetTag)
-  type: AssetType;       // Тип (замість category)
+  name: string;          
+  type: AssetType;       
   status: AssetStatus;
-  owner: string;         // Власник
+  owner: string;         
   location: string;
   purchaseDate: string;
-  serialNumber?: string; // Опціональний серійний номер
+  serialNumber?: string; 
 }

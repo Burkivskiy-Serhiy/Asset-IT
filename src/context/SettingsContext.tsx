@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Описуємо структуру наших налаштувань
 interface Settings {
   adminName: string;
   adminEmail: string;
@@ -66,5 +65,4 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Кастомний хук, щоб легко брати дані в будь-якому файлі
 export const useSettings = () => useContext(SettingsContext);

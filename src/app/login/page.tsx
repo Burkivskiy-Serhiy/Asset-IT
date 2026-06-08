@@ -17,7 +17,6 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // Звертаємося до NextAuth для перевірки даних
     const res = await signIn('credentials', {
       redirect: false,
       email,
@@ -28,7 +27,7 @@ export default function LoginPage() {
       setError('Невірний email або пароль');
       setLoading(false);
     } else {
-      router.push('/'); // Успішний логін - переходимо на дашборд
+      router.push('/');
       router.refresh();
     }
   };
