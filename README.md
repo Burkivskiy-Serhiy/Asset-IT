@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Asset-IT (Система управління ІТ-активами)
 
-## Getting Started
+Asset-IT — це сучасна, потужна та інтуїтивно зрозуміла система для корпоративного обліку ІТ-активів, управління ліцензіями, моніторингу серверів та технічної підтримки.
 
-First, run the development server:
+## Основні можливості
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Управління активами (ITAM):** Облік ноутбуків, моніторів, телефонів та іншої техніки. Відстеження статусів, призначення на співробітників та автоматична генерація інвентарних номерів.
+- **Управління співробітниками:** Ведення бази працівників. При звільненні співробітника вся прив'язана до нього техніка автоматично повертається на склад.
+- **Служба підтримки (Helpdesk):** Створення та обробка заявок від користувачів. Автоматичний розрахунок SLA (термінів виконання) та зміна пріоритетів при простроченні.
+- **Управління ліцензіями:** Облік програмного забезпечення, підписок та ліцензійних ключів, відстеження кількості вільних/зайнятих місць та термінів дії.
+- **Моніторинг серверів:** Дашборд для відстеження стану серверної інфраструктури (Uptime, CPU, RAM) зі статусами (Online, Offline, Warning).
+- **Глобальний журнал аудиту:** Деталізоване логування всіх критичних дій (створення, оновлення, видалення) по всій системі для забезпечення безпеки та контролю.
+- **Гнучкі налаштування:** Управління ролями (Адміністратор, Технік, Користувач), налаштування безпеки, інтеграція зі Slack для сповіщень та можливість критичного скидання БД (Wipe DB).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠 Технологічний стек
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Фреймворк:** [Next.js](https://nextjs.org/) (App Router)
+- **Мова:** TypeScript
+- **Стилізація:** Tailwind CSS, Lucide Icons, Framer Motion (для анімацій)
+- **База даних:** PostgreSQL (хостинг на [Neon](https://neon.tech/))
+- **ORM:** [Prisma](https://www.prisma.io/)
+- **Безпека:** Хешування паролів за допомогою `bcryptjs`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ⚙️ Встановлення та запуск локально
 
-## Learn More
+1. **Клонуйте репозиторій:**
+   ```bash
+   git clone <URL_репозиторію>
+   cd inform-plan-main
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Встановіть залежності:**
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Налаштуйте змінні середовища:**
+   Створіть файл `.env` у корені проєкту та додайте рядок підключення до вашої бази даних PostgreSQL:
+   ```env
+   DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Застосуйте схему бази даних:**
+   Запустіть Prisma для створення необхідних таблиць:
+   ```bash
+   npx prisma db push
+   npx prisma generate
+   ```
 
-## Deploy on Vercel
+5. **Запустіть сервер для розробки:**
+   ```bash
+   npm run dev
+   ```
+   Відкрийте [http://localhost:3000](http://localhost:3000) у вашому браузері, щоб побачити результат.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📦 Розгортання (Деплой)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Найпростіший спосіб розгорнути ваш додаток Next.js — використовувати платформу [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+Не забудьте вказати змінну `DATABASE_URL` у налаштуваннях середовища вашого хостингу під час розгортання.
+
+---
+*Розроблено з акцентом на сучасний UI/UX та високу продуктивність.*
