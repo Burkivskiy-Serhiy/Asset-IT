@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Key, ShieldCheck, AlertTriangle, Clock, Search, Trash2, X } from 'lucide-react';
+import { Plus, Key, ShieldCheck, AlertTriangle, Clock, Search, Trash2, X, Edit2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface License {
@@ -18,13 +19,19 @@ interface License {
 export default function LicensesPage() {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('all'); // all, active, expiring, expired
   const [isLoading, setIsLoading] = useState(true);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLicense, setEditingLicense] = useState<License | null>(null);
+  
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('Підписка');
   const [newKey, setNewKey] = useState('');
   const [newSeats, setNewSeats] = useState(1);
+  const [newUsedSeats, setNewUsedSeats] = useState(0);
   const [newDate, setNewDate] = useState('');
+
   const fetchLicenses = async () => {
     try {
       const res = await fetch('/api/licenses');
@@ -40,23 +47,53 @@ export default function LicensesPage() {
   useEffect(() => {
     fetchLicenses();
   }, []);
-  const handleAddLicense = async (e: React.FormEvent) => {
+
+  const openAddModal = () => {
+    setEditingLicense(null);
+    setNewName(''); setNewType('Підписка'); setNewKey(''); setNewSeats(1); setNewUsedSeats(0); setNewDate('');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (license: License) => {
+    setEditingLicense(license);
+    setNewName(license.name);
+    setNewType(license.softwareType);
+    setNewKey(license.licenseKey || '');
+    setNewSeats(license.totalSeats);
+    setNewUsedSeats(license.usedSeats || 0);
+    setNewDate(license.expirationDate ? new Date(license.expirationDate).toISOString().split('T')[0] : '');
+    setIsModalOpen(true);
+  };
+
+  const handleSaveLicense = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/licenses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newName,
-          softwareType: newType,
-          licenseKey: newKey,
-          totalSeats: newSeats,
-          expirationDate: newDate || null
-        })
-      });
-      if (res.ok) {
+      const payload = {
+        name: newName,
+        softwareType: newType,
+        licenseKey: newKey,
+        totalSeats: newSeats,
+        usedSeats: newUsedSeats,
+        expirationDate: newDate || null
+      };
+
+      let res;
+      if (editingLicense) {
+        res = await fetch(`/api/licenses/${editingLicense.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch('/api/licenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (res?.ok) {
         setIsModalOpen(false);
-        setNewName(''); setNewKey(''); setNewSeats(1); setNewDate('');
         fetchLicenses(); 
       }
     } catch (e) {
@@ -90,10 +127,19 @@ export default function LicensesPage() {
   const activeCount = licenses.filter(l => getLicenseStatus(l) === 'active').length;
   const attentionCount = licenses.filter(l => getLicenseStatus(l) !== 'active').length;
 
-  const filteredLicenses = licenses.filter(license =>
-    license.name.toLowerCase().includes(search.toLowerCase()) ||
-    (license.licenseKey && license.licenseKey.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredLicenses = licenses.filter(license => {
+    const matchesSearch = license.name.toLowerCase().includes(search.toLowerCase()) ||
+                          (license.licenseKey && license.licenseKey.toLowerCase().includes(search.toLowerCase()));
+    
+    if (!matchesSearch) return false;
+    
+    if (filterType === 'all') return true;
+    const status = getLicenseStatus(license);
+    if (filterType === 'active') return status === 'active';
+    if (filterType === 'expiring') return status === 'expiring';
+    if (filterType === 'expired') return status === 'expired';
+    return true;
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,125 +153,224 @@ export default function LicensesPage() {
     }
   };
 
-  if (isLoading) return <div className="p-6 text-center text-muted-foreground">Завантаження ліцензій...</div>;
+  if (isLoading) return <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center min-h-[50vh]"><Zap className="animate-pulse mb-4 text-primary" size={32}/>Завантаження ліцензій...</div>;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 max-w-[1600px] mx-auto space-y-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 max-w-[1600px] mx-auto space-y-8 text-white relative">
       
       {/* Хідер */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-gradient">Ліцензії та ПЗ</h1>
-          <p className="text-muted-foreground mt-1 font-light">Реальне керування софтом та ключами з бази Neon.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1">Ліцензії та ПЗ</h1>
+          <p className="text-muted-foreground font-light text-sm">Централізоване керування програмним забезпеченням та ключами доступу.</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-[0_0_20px_rgba(var(--primary),0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.7)]"
+          onClick={openAddModal}
+          className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all shadow-lg shadow-primary/20 self-start sm:self-center"
         >
           <Plus size={18} /> Додати ліцензію
         </button>
       </div>
 
-      {/* РЕАЛЬНІ ВІДЖЕТИ */}
+      {/* ПРЕМІУМ ВІДЖЕТИ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-card p-5 rounded-2xl flex items-center gap-4 border border-border">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500"><Key size={24} /></div>
-          <div><p className="text-sm font-medium text-muted-foreground">Всього в базі</p><h3 className="text-2xl font-bold">{totalLicenses}</h3></div>
-        </div>
-        <div className="bg-card p-5 rounded-2xl flex items-center gap-4 border border-border">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-500"><ShieldCheck size={24} /></div>
-          <div><p className="text-sm font-medium text-muted-foreground">Активні</p><h3 className="text-2xl font-bold">{activeCount}</h3></div>
-        </div>
-        <div className="bg-card p-5 rounded-2xl flex items-center gap-4 border border-border">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-500/10 text-amber-500"><AlertTriangle size={24} /></div>
-          <div><p className="text-sm font-medium text-muted-foreground">Увага / Протерміновані</p><h3 className="text-2xl font-bold">{attentionCount}</h3></div>
-        </div>
+        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 group-hover:scale-110 transition-all duration-300"><Key size={28} /></div>
+          <div><p className="text-sm font-medium text-gray-400">Всього в базі</p><h3 className="text-3xl font-black text-white tracking-tight">{totalLicenses}</h3></div>
+        </motion.div>
+        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300"><ShieldCheck size={28} /></div>
+          <div><p className="text-sm font-medium text-gray-400">Активні ліцензії</p><h3 className="text-3xl font-black text-white tracking-tight">{activeCount}</h3></div>
+        </motion.div>
+        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20 group-hover:scale-110 transition-all duration-300"><AlertTriangle size={28} /></div>
+          <div><p className="text-sm font-medium text-gray-400">Потребують уваги</p><h3 className="text-3xl font-black text-white tracking-tight">{attentionCount}</h3></div>
+        </motion.div>
       </div>
 
-      {/* Таблиця */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col">
-        {/* Пошук */}
-        <div className="p-4 border-b border-border flex justify-between items-center bg-muted/10">
-          <div className="relative w-full max-w-sm">
+      {/* ТАБЛИЦЯ ТА ФІЛЬТРИ */}
+      <div className="bg-card/60 backdrop-blur-md border border-border rounded-2xl overflow-hidden flex flex-col shadow-2xl">
+        
+        {/* Фільтри та пошук */}
+        <div className="p-5 border-b border-border flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-muted/5">
+          <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 custom-scrollbar">
+            {['all', 'active', 'expiring', 'expired'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
+                  filterType === type 
+                    ? "bg-primary/20 text-primary border border-primary/30" 
+                    : "bg-secondary text-muted-foreground hover:bg-secondary/80 border border-transparent"
+                )}
+              >
+                {type === 'all' ? 'Всі ліцензії' : 
+                 type === 'active' ? 'Активні' : 
+                 type === 'expiring' ? 'Закінчуються' : 'Протерміновані'}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full lg:max-w-xs shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <input 
               type="text" 
               placeholder="Пошук за назвою чи ключем..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full bg-background/50 border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 focus:bg-background transition-colors"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-muted/30 text-muted-foreground font-semibold">
+            <thead className="bg-muted/20 text-gray-400 font-semibold border-b border-border/50">
               <tr>
                 <th className="px-6 py-4">Назва ПЗ</th>
-                <th className="px-6 py-4">Тип</th>
                 <th className="px-6 py-4">Ключ ліцензії</th>
-                <th className="px-6 py-4">Місць всього</th>
+                <th className="px-6 py-4">Використання місць</th>
                 <th className="px-6 py-4">Термін дії</th>
                 <th className="px-6 py-4">Статус</th>
                 <th className="px-6 py-4 text-right">Дії</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {filteredLicenses.map((license) => (
-                <tr key={license.id} className="hover:bg-muted/10 transition-colors group">
-                  <td className="px-6 py-4 font-medium flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground"><Key size={16} /></div>
-                    {license.name}
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">{license.softwareType}</td>
-                  <td className="px-6 py-4 font-mono text-xs max-w-[150px] truncate">{license.licenseKey || '—'}</td>
-                  <td className="px-6 py-4 font-semibold">{license.totalSeats}</td>
-                  <td className="px-6 py-4 text-muted-foreground">
-                    {license.expirationDate ? new Date(license.expirationDate).toLocaleDateString('uk-UA') : 'Безстроково'}
-                  </td>
-                  <td className="px-6 py-4">{getStatusBadge(getLicenseStatus(license))}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => handleDelete(license.id)}
-                      className="p-2 text-muted-foreground hover:text-red-500 rounded-lg hover:bg-red-500/10 transition-colors"
+            <tbody className="divide-y divide-border/50">
+              <AnimatePresence>
+                {filteredLicenses.map((license) => {
+                  const usedPerc = license.totalSeats > 0 ? (license.usedSeats / license.totalSeats) * 100 : 0;
+                  const progColor = usedPerc >= 90 ? 'bg-red-500' : usedPerc >= 75 ? 'bg-amber-400' : 'bg-emerald-500';
+
+                  return (
+                    <motion.tr 
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                      key={license.id} 
+                      className="hover:bg-muted/10 transition-colors group"
                     >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-background/80 border border-border flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><Key size={16} /></div>
+                          <div>
+                            <p className="font-bold text-white text-base">{license.name}</p>
+                            <p className="text-xs text-muted-foreground">{license.softwareType}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-gray-300">
+                        {license.licenseKey ? (
+                          <span className="bg-black/30 px-2 py-1 rounded border border-white/5">{license.licenseKey}</span>
+                        ) : '—'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1.5 w-40">
+                          <div className="flex justify-between text-xs">
+                            <span className="font-medium text-gray-300">{license.usedSeats} зайнято</span>
+                            <span className="text-gray-500">з {license.totalSeats}</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }} animate={{ width: `${Math.min(usedPerc, 100)}%` }} transition={{ duration: 1 }}
+                              className={cn("h-full rounded-full", progColor)} 
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-400">
+                        {license.expirationDate ? new Date(license.expirationDate).toLocaleDateString('uk-UA') : 'Безстроково'}
+                      </td>
+                      <td className="px-6 py-4">{getStatusBadge(getLicenseStatus(license))}</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            onClick={() => openEditModal(license)}
+                            className="p-2 text-gray-400 hover:text-blue-400 rounded-lg hover:bg-blue-500/10 transition-colors"
+                            title="Редагувати"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(license.id)}
+                            className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                            title="Видалити"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  )
+                })}
+              </AnimatePresence>
               {filteredLicenses.length === 0 && (
-                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Нічого не знайдено</td></tr>
+                <tr><td colSpan={6} className="p-12 text-center text-muted-foreground">За вашими критеріями не знайдено жодної ліцензії.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* МОДАЛЬНЕ ВІКНО ДОДАВАННЯ (AnimatePresence для плавності) */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-background border border-border w-full max-w-md rounded-2xl p-6 relative shadow-2xl">
-              <button onClick={() => setIsModalOpen(false)} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"><X size={20}/></button>
-              <h2 className="text-xl font-bold mb-4">Додати нове ПЗ</h2>
-              <form onSubmit={handleAddLicense} className="space-y-4">
-                <div><label className="text-xs font-bold text-muted-foreground">Назва</label><input required type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-muted border border-border rounded-xl p-2.5 mt-1 text-sm outline-none"/></div>
-                <div><label className="text-xs font-bold text-muted-foreground">Тип</label>
-                  <select value={newType} onChange={e => setNewType(e.target.value)} className="w-full bg-muted border border-border rounded-xl p-2.5 mt-1 text-sm outline-none">
-                    <option>Підписка</option><option>OEM Ключ</option><option>Антивірус</option><option>Хмарна підписка</option>
-                  </select>
-                </div>
-                <div><label className="text-xs font-bold text-muted-foreground">Ліцензійний ключ</label><input type="text" value={newKey} onChange={e => setNewKey(e.target.value)} className="w-full bg-muted border border-border rounded-xl p-2.5 mt-1 text-sm font-mono outline-none"/></div>
-                <div><label className="text-xs font-bold text-muted-foreground">Кількість ліцензій (місць)</label><input type="number" min="1" value={newSeats} onChange={e => setNewSeats(Number(e.target.value))} className="w-full bg-muted border border-border rounded-xl p-2.5 mt-1 text-sm outline-none"/></div>
-                <div><label className="text-xs font-bold text-muted-foreground">Дата закінчення (опціонально)</label><input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-muted border border-border rounded-xl p-2.5 mt-1 text-sm outline-none"/></div>
-                <button type="submit" className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold mt-2 hover:bg-primary/90 transition-all">Зберегти в базу</button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* МОДАЛЬНЕ ВІКНО ДОДАВАННЯ/РЕДАГУВАННЯ */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+                animate={{ scale: 1, opacity: 1, y: 0 }} 
+                exit={{ scale: 0.95, opacity: 0, y: 20 }} 
+                className="bg-card border border-border w-full max-w-lg rounded-2xl p-6 md:p-8 relative shadow-2xl m-auto text-foreground"
+              >
+                <button onClick={() => setIsModalOpen(false)} className="absolute right-5 top-5 text-muted-foreground hover:text-foreground bg-secondary/50 p-1.5 rounded-lg transition-colors"><X size={20}/></button>
+                <h2 className="text-2xl font-bold mb-6 text-white">{editingLicense ? 'Редагувати ліцензію' : 'Додати нове ПЗ'}</h2>
+                <form onSubmit={handleSaveLicense} className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Назва ПЗ</label>
+                      <input required type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" placeholder="Напр. Adobe Creative Cloud"/>
+                    </div>
+                    
+                    <div>
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Тип ліцензії</label>
+                      <select value={newType} onChange={e => setNewType(e.target.value)} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white">
+                        <option>Підписка</option><option>OEM Ключ</option><option>Антивірус</option><option>Хмарна підписка</option><option>Вічна ліцензія</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Дата закінчення</label>
+                      <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" style={{colorScheme: 'dark'}}/>
+                    </div>
+
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ліцензійний ключ</label>
+                      <input type="text" value={newKey} onChange={e => setNewKey(e.target.value)} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm font-mono outline-none transition-colors text-white" placeholder="XXXX-XXXX-XXXX-XXXX"/>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Всього місць</label>
+                      <input type="number" min="1" value={newSeats} onChange={e => setNewSeats(Number(e.target.value))} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white"/>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Використано місць</label>
+                      <input type="number" min="0" max={newSeats} value={newUsedSeats} onChange={e => setNewUsedSeats(Number(e.target.value))} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white"/>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end gap-3">
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-3 rounded-xl font-semibold hover:bg-secondary transition-all text-gray-300">Скасувати</button>
+                    <button type="submit" className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_15px_rgba(var(--primary),0.3)]">
+                      {editingLicense ? 'Зберегти зміни' : 'Створити ліцензію'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </motion.div>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { logAction } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,7 @@ export async function GET() {
       createdAt: asset.createdAt,
       location: asset.location,
       specs: asset.specs || '',
+      warrantyExpires: asset.warrantyExpires,
       assignedTo: asset.user === 'Не призначено' ? '' : (asset.user || ''),
     }));
 
@@ -41,7 +43,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Назва та категорія є обовʼязковими' }, { status: 400 });
     }
 
-    const generatedInventoryId = `INV-${Math.floor(100000 + Math.random() * 900000)}`;
+    const settings = await prisma.systemSettings.findUnique({ where: { id: 1 } });
+    const prefix = settings?.assetPrefix || 'ITA-';
+
+    const generatedInventoryId = `${prefix}${Math.floor(100000 + Math.random() * 900000)}`;
     const serialToStore = body.serial_number && body.serial_number.trim() !== '' 
       ? body.serial_number 
       : `SN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
@@ -56,8 +61,11 @@ export async function POST(request: Request) {
         price: 0.0,
         location: body.location || '{"office":"Головний офіс","floor":"","room":""}',
         user: body.assignedTo || 'Не призначено', 
+        warrantyExpires: body.warrantyExpires ? new Date(body.warrantyExpires) : null,
       },
     });
+
+    await logAction('Система', 'info', 'Активи', `Створено новий актив: ${newAsset.name} (${newAsset.inventoryId})`);
 
     return NextResponse.json(newAsset, { status: 201 });
   } catch (error: any) {

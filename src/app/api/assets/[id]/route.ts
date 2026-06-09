@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendSlackNotification } from '@/lib/slack';
+import { logAction } from '@/lib/logger';
 
 export async function PUT(req: Request, { params }: { params: any }) {
   try {
@@ -10,11 +11,37 @@ export async function PUT(req: Request, { params }: { params: any }) {
     console.log(`Спроба оновлення активу з ID: ${id}`);
 
     const body = await req.json();
-    const { name, status, category, brand, model, serial_number, specs, assignedTo, location } = body;
+    const { name, status, category, brand, model, serial_number, specs, assignedTo, location, warrantyExpires } = body;
 
     let userToStore = assignedTo || 'Не призначено';
     if (['retired', 'missing'].includes(status)) {
       userToStore = 'Не призначено';
+    }
+
+    const currentAsset = await prisma.asset.findUnique({
+      where: { id }
+    });
+
+    if (!currentAsset) {
+      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+    }
+
+    // Перевірка на зміни для Журналу переміщень
+    const hasUserChanged = currentAsset.user !== userToStore && currentAsset.user !== null;
+    const hasLocationChanged = currentAsset.location !== location && currentAsset.location !== null;
+
+    if (hasUserChanged || hasLocationChanged) {
+      await prisma.assetTransfer.create({
+        data: {
+          assetId: id,
+          assetName: name,
+          fromUser: currentAsset.user,
+          toUser: userToStore,
+          fromLocation: currentAsset.location,
+          toLocation: location || undefined,
+          // У реальному додатку performedBy можна брати з сесії (next-auth)
+        }
+      });
     }
 
     const asset = await prisma.asset.update({
@@ -29,7 +56,8 @@ export async function PUT(req: Request, { params }: { params: any }) {
         serialNumber: serial_number || null,
         specs: specs || null,
         user: userToStore,
-        location: location || undefined
+        location: location || undefined,
+        warrantyExpires: warrantyExpires ? new Date(warrantyExpires) : null
       }
     });
 
@@ -60,6 +88,8 @@ export async function PUT(req: Request, { params }: { params: any }) {
       assignedTo: asset.user === 'Не призначено' ? '' : (asset.user || ''),
       serial_number: asset.serialNumber
     };
+
+    await logAction('Система', 'info', 'Активи', `Оновлено актив: ${asset.name} (${asset.inventoryId || id})`);
 
     return NextResponse.json(assetWithFrontendFields);
   } catch (error: any) {
@@ -100,6 +130,8 @@ export async function DELETE(req: Request, { params }: { params: any }) {
     } catch (slackError) {
       console.error('Помилка відправки Slack (DELETE):', slackError);
     }
+
+    await logAction('Система', 'warning', 'Активи', `Видалено актив: ${asset.name} (${id})`);
 
     return NextResponse.json({ message: 'Asset deleted successfully' });
   } catch (error: any) {

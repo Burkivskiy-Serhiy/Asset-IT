@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { logAction } from '@/lib/logger';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
@@ -11,12 +12,21 @@ export async function GET() {
       orderBy: { createdAt: 'asc' }
     });
 
-    const formattedUsers = users.map(user => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      created_at: user.createdAt
+    const formattedUsers = await Promise.all(users.map(async (user) => {
+      const lastLog = await prisma.log.findFirst({
+        where: { actor: { contains: user.name } },
+        orderBy: { createdAt: 'desc' }
+      });
+      
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        created_at: user.createdAt,
+        lastActivity: lastLog ? lastLog.time : null
+      };
     }));
 
     return NextResponse.json(formattedUsers);
@@ -44,6 +54,8 @@ export async function POST(req: Request) {
       }
     });
 
+    await logAction('Адміністратор', 'info', 'Користувачі', `Створено користувача: ${newUser.name} (${newUser.email})`);
+
     return NextResponse.json({
       id: newUser.id,
       name: newUser.name,
@@ -65,13 +77,20 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, role } = body;
+    const { id, role, status, action } = body;
 
-    if (!id || !role) {
-      return NextResponse.json({ error: 'ID та роль є обовʼязковими' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'ID є обовʼязковим' }, { status: 400 });
     }
 
-    if (role === 'tech') {
+    if (action === 'reset_password') {
+      const newPassword = `Tech${Math.floor(Math.random() * 9000) + 1000}!`;
+      await prisma.user.update({ where: { id }, data: { password: newPassword } });
+      await logAction('Адміністратор', 'warning', 'Користувачі', `Скинуто пароль для користувача ID: ${id}`);
+      return NextResponse.json({ newPassword });
+    }
+
+    if (role && role !== 'admin') {
       const adminCount = await prisma.user.count({
         where: { role: 'admin' }
       });
@@ -89,16 +108,23 @@ export async function PUT(req: Request) {
       }
     }
 
+    const dataToUpdate: any = {};
+    if (role) dataToUpdate.role = role;
+    if (status) dataToUpdate.status = status;
+
     const updatedUser = await prisma.user.update({
       where: { id },
-      data: { role }
+      data: dataToUpdate
     });
+
+    await logAction('Адміністратор', 'info', 'Користувачі', `Оновлено користувача: ${updatedUser.name} (${updatedUser.email})`);
 
     return NextResponse.json({
       id: updatedUser.id,
       name: updatedUser.name,
       email: updatedUser.email,
-      role: updatedUser.role
+      role: updatedUser.role,
+      status: updatedUser.status
     });
   } catch (error: any) {
     console.error('Users PUT Error:', error);
@@ -136,6 +162,8 @@ export async function DELETE(req: Request) {
     await prisma.user.delete({
       where: { id }
     });
+
+    await logAction('Адміністратор', 'warning', 'Користувачі', `Видалено користувача ID: ${id}`);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

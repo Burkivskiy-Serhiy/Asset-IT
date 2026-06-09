@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma'; 
+import { logAction } from '@/lib/logger'; 
 
 export async function GET() {
   try {
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
         slackNotif: body.slackNotif,
         slackWebhook: body.slackWebhook,
         maintenanceMode: body.maintenanceMode,
+        adminName: body.adminName,
+        adminEmail: body.adminEmail,
       },
       create: {
         id: 1,
@@ -42,9 +45,12 @@ export async function POST(request: Request) {
         slackNotif: body.slackNotif ?? false,
         slackWebhook: body.slackWebhook || '',
         maintenanceMode: body.maintenanceMode ?? false,
+        adminName: body.adminName || 'Asset-IT',
+        adminEmail: body.adminEmail || 'admin@asset-it.com',
       }
     });
     
+    await logAction('Адміністратор', 'warning', 'Налаштування', 'Оновлено системні налаштування');
     return NextResponse.json(updatedSettings);
   } catch (error) {
     console.error('Помилка збереження налаштувань:', error);
@@ -56,6 +62,8 @@ export async function DELETE() {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
+    await logAction('Адміністратор', 'error', 'Небезпечна зона', 'Реініціалізація бази даних (WIPE)');
+    
     return NextResponse.json({ 
       success: true, 
       message: 'Системні таблиці успішно реініціалізовано.' 

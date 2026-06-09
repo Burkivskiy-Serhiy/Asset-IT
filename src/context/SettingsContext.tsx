@@ -44,8 +44,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch('/api/settings');
       if (response.ok) {
-        const data = await response.json();
-        setSettings(data);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          setSettings(data);
+        }
       }
     } catch (error) {
       console.error('Помилка завантаження глобальних налаштувань:', error);

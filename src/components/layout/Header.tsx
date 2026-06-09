@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { Search, Bell, LogOut, MessageSquare } from 'lucide-react';
+import { Search, Bell, LogOut, MessageSquare, User } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,32 @@ export default function Header() {
       return () => clearInterval(interval);
     }
   }, [status]);
+
+  // Background cron trigger for license checks (runs once a day per browser)
+  useEffect(() => {
+    const checkLicenses = async () => {
+      const lastCheck = localStorage.getItem('license_check_date');
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (lastCheck !== today) {
+        try {
+          // Запускаємо перевірки ліцензій та щоденний звіт паралельно
+          await Promise.allSettled([
+            fetch('/api/cron/check-licenses'),
+            fetch('/api/cron/check-warranties'),
+            fetch('/api/cron/daily-digest')
+          ]);
+          localStorage.setItem('license_check_date', today);
+        } catch (e) {
+          // Silently ignore background cron errors
+        }
+      }
+    };
+    
+    // Запускаємо через 5 секунд після завантаження сторінки, щоб не сповільнювати UI
+    const timer = setTimeout(checkLicenses, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -63,7 +89,7 @@ export default function Header() {
         setNotifications(data);
       }
     } catch (error) {
-      console.error('Не вдалося завантажити сповіщення:', error);
+      // Silently ignore fetch errors (e.g. during dev server restart)
     }
   };
 
@@ -106,8 +132,8 @@ export default function Header() {
   }
 
   return (
-    <header className="w-full flex items-center justify-between py-6 px-8 bg-background border-b border-border sticky top-0 z-40">
-      <div className="flex flex-col gap-1">
+    <header className="w-full h-24 flex items-center justify-between px-8 bg-background border-b border-border sticky top-0 z-40">
+      <div className="flex flex-col gap-1 justify-center">
         <h1 className="text-xl text-white font-medium">
           Добрий ранок, <span className="font-semibold">{loading ? "..." : displayName}</span>
           <span className="text-gray-400 font-normal text-sm ml-2 italic">
@@ -249,7 +275,15 @@ export default function Header() {
           </div>
           
           <div className="absolute top-full right-0 mt-4 w-48 bg-card rounded-xl border border-border shadow-2xl z-50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-            <div className="p-2">
+            <div className="p-2 flex flex-col gap-1">
+              <button
+                onClick={() => router.push('/profile')}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-secondary/80 rounded-lg transition-colors"
+              >
+                <User size={16} />
+                Мій профіль
+              </button>
+              <div className="h-px bg-border my-1" />
               <button
                 onClick={() => signOut({ callbackUrl: '/login' })}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"

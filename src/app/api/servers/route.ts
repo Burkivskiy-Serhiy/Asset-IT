@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { logAction } from '@/lib/logger';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
       VALUES (${id}, ${name}, ${ip}, ${type}, ${status}, ${cpu}, ${ram}, ${uptime})
       RETURNING *
     `;
+    await logAction('Система', 'info', 'Сервери', `Додано сервер: ${name}`);
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Servers POST Error:', error);

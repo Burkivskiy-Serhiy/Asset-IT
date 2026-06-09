@@ -3,9 +3,17 @@ import { NextResponse } from 'next/server';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const data = await sql`SELECT * FROM logs ORDER BY "createdAt" DESC LIMIT 50`;
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get('category');
+    
+    let data;
+    if (category === 'system') {
+      data = await sql`SELECT * FROM logs WHERE source IN ('SYS', 'Моніторинг', 'Сервер', 'Мережа', 'Інфраструктура', 'Система') ORDER BY "createdAt" DESC LIMIT 50`;
+    } else {
+      data = await sql`SELECT * FROM logs ORDER BY "createdAt" DESC LIMIT 50`;
+    }
     return NextResponse.json(data);
   } catch (error) {
     console.error('Logs GET Error:', error);

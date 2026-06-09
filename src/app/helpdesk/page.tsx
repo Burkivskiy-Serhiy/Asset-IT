@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSettings } from '@/context/SettingsContext';
+import { useSession } from 'next-auth/react';
 
 interface HelpdeskTicket {
   id: string;
@@ -22,6 +23,9 @@ interface HelpdeskTicket {
 
 export default function HelpdeskPage() {
   const { settings, loading } = useSettings();
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role || 'guest';
+  const canEdit = userRole === 'admin' || userRole === 'tech';
   const [tickets, setTickets] = useState<HelpdeskTicket[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -337,17 +341,19 @@ export default function HelpdeskPage() {
                         </span>
                       </div>
 
-                      <button onClick={() => handleDeleteTicket(ticket.id)} className="absolute top-4 right-4 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" title="Видалити заявку">
-                        <Trash2 size={14} />
-                      </button>
+                      {canEdit && (
+                        <button onClick={() => handleDeleteTicket(ticket.id)} className="absolute top-4 right-4 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" title="Видалити заявку">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
 
                       <div className="flex gap-2 mt-1">
-                        {ticket.status === 'open' && (
+                        {canEdit && ticket.status === 'open' && (
                           <button onClick={() => handleMoveStatus(ticket.id, 'in_progress')} className="w-full text-center bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[11px] font-bold py-1.5 rounded-md border border-blue-500/20 transition-colors flex items-center justify-center gap-1">
                             В роботу <ArrowRight size={12} />
                           </button>
                         )}
-                        {ticket.status === 'in_progress' && (
+                        {canEdit && ticket.status === 'in_progress' && (
                           <>
                             <button onClick={() => handleMoveStatus(ticket.id, 'open')} className="px-2 bg-white/5 hover:bg-white/10 text-gray-400 py-1.5 rounded-md border border-white/5 transition-colors" title="Повернути назад"><ArrowLeft size={12} /></button>
                             <button onClick={() => handleMoveStatus(ticket.id, 'resolved')} className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-bold py-1.5 rounded-md border border-emerald-500/20 transition-colors flex items-center justify-center gap-1">
@@ -355,7 +361,7 @@ export default function HelpdeskPage() {
                             </button>
                           </>
                         )}
-                        {ticket.status === 'resolved' && (
+                        {canEdit && ticket.status === 'resolved' && (
                           <button onClick={() => handleMoveStatus(ticket.id, 'in_progress')} className="w-full text-center bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[11px] font-bold py-1.5 rounded-md border border-amber-500/20 transition-colors flex items-center justify-center gap-1">
                             <ArrowLeft size={12} /> Перевідкрити
                           </button>

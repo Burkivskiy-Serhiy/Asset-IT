@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { logAction } from '@/lib/logger';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({
+    const responseObj = {
       id: newEmployee.id,
       name: `${newEmployee.firstName} ${newEmployee.lastName}`.trim(),
       role: newEmployee.position,
@@ -85,7 +86,9 @@ export async function POST(req: Request) {
       status: newEmployee.status,
       dateJoined: newEmployee.createdAt,
       assetsList: []
-    }, { status: 201 });
+    };
+    await logAction('Система', 'info', 'Співробітники', `Створено співробітника: ${newEmployee.firstName} ${newEmployee.lastName}`);
+    return NextResponse.json(responseObj, { status: 201 });
 
   } catch (error: any) {
     console.error('Помилка додавання працівника через Prisma:', error);
@@ -123,6 +126,8 @@ export async function DELETE(req: Request) {
       where: { id }
     });
     
+    await logAction('Система', 'warning', 'Співробітники', `Видалено співробітника ID: ${id}`);
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Помилка видалення працівника через Prisma:', error);
@@ -167,6 +172,8 @@ export async function PUT(req: Request) {
         }
       });
     }
+
+    await logAction('Система', 'info', 'Співробітники', `Оновлено співробітника: ${updatedEmployee.firstName} ${updatedEmployee.lastName}`);
 
     return NextResponse.json({ success: true, employee: updatedEmployee });
   } catch (error: any) {

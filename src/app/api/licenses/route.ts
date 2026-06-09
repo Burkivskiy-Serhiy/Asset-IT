@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { logAction } from '@/lib/logger';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     });
 
     console.log("Успішно збережено в Neon:", newLicense);
+    await logAction('Система', 'info', 'Ліцензії', `Створено ліцензію: ${newLicense.name}`);
     return NextResponse.json(newLicense);
   } catch (error: any) {
     console.error("Критична помилка при збереженні в Neon:", error);

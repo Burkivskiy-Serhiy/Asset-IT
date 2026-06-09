@@ -21,6 +21,7 @@ model Asset {
   brand        String?  
   model        String?  
   specs        String?  
+  warrantyExpires DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
@@ -91,10 +92,16 @@ model SecurityLog {
 }
 
 model SecuritySettings {
-  id          Int     @id @default(1)
-  twoFactor   Boolean @default(false)
-  ldapEnabled Boolean @default(false)
-  apiKey      String  @default("")
+  id                    Int     @id @default(1)
+  twoFactor             Boolean @default(false)
+  ldapEnabled           Boolean @default(false)
+  apiKey                String  @default("")
+  requirePasswordChange Boolean @default(false)
+  complexPasswords      Boolean @default(false)
+  googleSso             Boolean @default(false)
+  microsoftSso          Boolean @default(false)
+  ssoClientId           String  @default("")
+  ssoTenantId           String  @default("")
 
   @@map("security_settings")
 }
@@ -106,6 +113,7 @@ model User {
   email     String   @unique
   password  String   
   role      String   @default("tech") 
+  status    String   @default("active")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -134,6 +142,33 @@ model Employee {
   status     String   @default("Активний") 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
 
-  @@map("employees") 
+model MaintenanceTask {
+  id          String    @id @default(uuid())
+  assetId     String   
+  title       String   
+  description String?  
+  scheduledAt DateTime 
+  completedAt DateTime?
+  status      String    @default("Заплановано")
+  type        String    @default("ТО")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("maintenance_tasks")
+}
+
+model AssetTransfer {
+  id           String   @id @default(uuid())
+  assetId      String
+  assetName    String
+  fromUser     String?
+  toUser       String?
+  fromLocation String?
+  toLocation   String?
+  date         DateTime @default(now())
+  performedBy  String   @default("Система")
+  
+  @@map("asset_transfers")
 }

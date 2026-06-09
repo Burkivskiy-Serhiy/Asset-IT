@@ -13,7 +13,8 @@ import {
   Ticket,
   Users,
   FileText,
-  Hexagon
+  Cpu,
+  Wrench
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,7 @@ const menuItems = [
     group: 'Управління',
     items: [
       { icon: Ticket, label: 'Служба підтримки', href: '/helpdesk', allowedRoles: ['admin', 'tech', 'user'] },
+      { icon: Wrench, label: 'Планове ТО', href: '/maintenance', allowedRoles: ['admin', 'tech'] },
       { icon: FileText, label: 'Звіти та відомості', href: '/reports', allowedRoles: ['admin', 'tech'] },
       { icon: Users, label: 'Співробітники', href: '/employees', allowedRoles: ['admin', 'tech'] },
     ]
@@ -61,13 +63,12 @@ export default function Sidebar() {
 
   return (
     <aside className="w-[260px] h-screen bg-card border-r border-border flex flex-col sticky top-0 z-50">
-      <div className="p-6 h-24 flex items-center gap-3 border-b border-border">
+      <div className="px-6 h-24 flex items-center gap-3 border-b border-border">
         <div className="relative flex items-center justify-center">
-          <Hexagon className="text-primary" size={32} strokeWidth={2.5} />
-          <div className="absolute w-2 h-2 bg-primary rounded-full" />
+          <Cpu className="text-primary" size={32} strokeWidth={2.5} />
         </div>
         <span className="text-2xl font-bold tracking-tight text-white">
-          Baap<span className="text-primary italic">.IT</span>
+          Asset<span className="text-primary">-IT</span>
         </span>
       </div>
       

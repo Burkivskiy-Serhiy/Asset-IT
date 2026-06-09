@@ -1,5 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { sendServerAlert } from '@/lib/slack';
+import { prisma } from '@/lib/prisma';
+import { logAction } from '@/lib/logger';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -31,6 +34,22 @@ export async function PUT(req: Request, { params }: { params: any }) {
       return NextResponse.json({ error: 'Сервер не знайдено' }, { status: 404 });
     }
 
+    // Відправка Slack повідомлення при падінні
+    if (status === 'Offline' || status === 'Critical') {
+      try {
+        const settings = await prisma.systemSettings.findFirst();
+        if (settings?.slackNotif && settings?.slackWebhook) {
+          // Send alert only if the server wasn't already offline (to prevent spam)
+          // Since we already updated it, we can't easily check previous state without another query,
+          // but for simplicity we alert on any PUT that sets it to Offline
+          await sendServerAlert(settings.slackWebhook, updatedServer[0]);
+        }
+      } catch (slackErr) {
+        console.error('Slack Server Alert Error:', slackErr);
+      }
+    }
+
+    await logAction('Система', 'info', 'Сервери', `Оновлено сервер: ${name}`);
     return NextResponse.json(updatedServer[0]);
   } catch (error: any) {
     console.error('Server PUT Error:', error);
@@ -55,6 +74,7 @@ export async function DELETE(req: Request, { params }: { params: any }) {
       return NextResponse.json({ error: 'Сервер не знайдено' }, { status: 404 });
     }
 
+    await logAction('Система', 'warning', 'Сервери', `Видалено сервер ID: ${id}`);
     return NextResponse.json({ message: 'Сервер успішно видалено' });
   } catch (error: any) {
     console.error('Server DELETE Error:', error);

@@ -1,6 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { sendHelpdeskAlert } from '@/lib/slack';
+import { prisma } from '@/lib/prisma';
+import { logAction } from '@/lib/logger';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -58,7 +61,18 @@ export async function POST(req: Request) {
       VALUES (${id}, ${title}, ${description}, ${status}, ${priority}, ${user}, NOW(), NOW())
       RETURNING *
     `;
+
+    // Відправка Slack повідомлення
+    try {
+      const settings = await prisma.systemSettings.findFirst();
+      if (settings?.slackNotif && settings?.slackWebhook) {
+        await sendHelpdeskAlert(settings.slackWebhook, result[0]);
+      }
+    } catch (slackErr) {
+      console.error('Slack Helpdesk Alert Error:', slackErr);
+    }
     
+    await logAction('Система', 'info', 'Helpdesk', `Створено заявку: ${title}`);
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Tickets POST Error:', error);
@@ -104,6 +118,7 @@ export async function PUT(req: Request) {
       RETURNING *
     `;
 
+    await logAction('Система', 'info', 'Helpdesk', `Оновлено заявку: ${finalTitle}`);
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error('Tickets PUT Error:', error);
@@ -136,6 +151,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Тікет із таким ID не знайдено або вже видалено' }, { status: 404 });
     }
 
+    await logAction('Система', 'warning', 'Helpdesk', `Видалено заявку ID: ${id}`);
     return NextResponse.json({ success: true, message: `Тікет ${id} успішно видалено з бази даних` });
   } catch (error) {
     console.error('Tickets DELETE Error:', error);
