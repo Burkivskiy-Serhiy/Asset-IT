@@ -311,7 +311,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sticky top-0 bg-background/80 backdrop-blur-xl z-20 pt-4 pb-4 -mt-4 border-b border-white/5">
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sticky top-0 bg-background/80 backdrop-blur-xl z-20 pt-4 pb-4 -mt-4 border-b border-border">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1">Налаштування</h1>
           <p className="text-muted-foreground text-sm font-light">Глобальна конфігурація обліку активів, безпеки та сповіщень.</p>
@@ -323,7 +323,7 @@ export default function SettingsPage() {
           <Button 
             onClick={handleSaveChanges} 
             disabled={!hasChanges || isSaving}
-            className={`gap-2 transition-all duration-300 ${hasChanges && !isSaving ? 'bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(var(--primary),0.5)] hover:shadow-[0_0_30px_rgba(var(--primary),0.8)]' : 'bg-white/5 text-gray-400'}`}
+            className={`gap-2 transition-all duration-300 ${hasChanges && !isSaving ? 'bg-primary hover:bg-primary/90 text-white shadow-[0_0_20px_rgba(var(--primary),0.5)] hover:shadow-[0_0_30px_rgba(var(--primary),0.8)]' : 'bg-secondary text-gray-400'}`}
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             Зберегти
@@ -363,7 +363,7 @@ export default function SettingsPage() {
         {activeTab === 'general' && (
           <>
             <div className="lg:col-span-7 space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
-              <Card className="glass-panel border-none">
+              <Card className="bg-card border border-border rounded-xl">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <Globe2 size={20} className="text-emerald-400" /> Регіональні налаштування
@@ -375,19 +375,19 @@ export default function SettingsPage() {
                       <Coins size={12} /> Основна Валюта
                     </label>
                     <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/50">
-                      <option value="UAH" className="bg-[#141416]">Гривня (₴ UAH)</option>
-                      <option value="USD" className="bg-[#141416]">Долар ($ USD)</option>
-                      <option value="EUR" className="bg-[#141416]">Євро (€ EUR)</option>
+                      <option value="UAH" className="bg-card">Гривня (₴ UAH)</option>
+                      <option value="USD" className="bg-card">Долар ($ USD)</option>
+                      <option value="EUR" className="bg-card">Євро (€ EUR)</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-gray-400 uppercase">Префікс інвентарних номерів</label>
-                    <Input value={assetPrefix} onChange={(e) => setAssetPrefix(e.target.value)} className="bg-white/5 border-white/10 text-white font-mono" />
+                    <Input value={assetPrefix} onChange={(e) => setAssetPrefix(e.target.value)} className="bg-secondary/50 border-border text-foreground font-mono" />
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="glass-panel border-none">
+              <Card className="bg-card border border-border rounded-xl">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <Bell size={20} className="text-amber-400" /> Інтеграції та Сповіщення
@@ -412,13 +412,13 @@ export default function SettingsPage() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-400 uppercase">Slack Webhook URL</label>
                       <div className="flex gap-2">
-                        <Input placeholder="https://hooks.slack.com/services/..." value={slackWebhook} onChange={(e) => setSlackWebhook(e.target.value)} className="flex-1 bg-black/40 border-white/10 text-white text-xs font-mono" />
+                        <Input placeholder="https://hooks.slack.com/services/..." value={slackWebhook} onChange={(e) => setSlackWebhook(e.target.value)} className="flex-1 bg-secondary/50 border-border text-foreground text-xs font-mono" />
                         <Button 
                           type="button" 
                           variant="outline" 
                           onClick={handleTestSlack}
                           disabled={!slackWebhook || isTestingSlack}
-                          className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-primary transition-colors"
+                          className="bg-secondary border-border text-foreground hover:bg-secondary/80 hover:text-primary transition-colors"
                         >
                           {isTestingSlack ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                         </Button>
@@ -430,7 +430,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="lg:col-span-5 space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
-              <Card className="glass-panel border-none">
+              <Card className="bg-card border border-border rounded-xl">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <HardDrive size={20} className="text-blue-400" /> Ресурси системи
@@ -463,7 +463,7 @@ export default function SettingsPage() {
 
         {activeTab === 'users' && (
           <div className="col-span-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <Card className="glass-panel border-none">
+            <Card className="bg-card border border-border rounded-xl">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl text-white flex items-center gap-2">
                   <Users size={20} className="text-blue-400" /> Управління користувачами
@@ -483,7 +483,7 @@ export default function SettingsPage() {
 
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="bg-white/5 text-gray-400 font-semibold border-b border-white/5 text-xs uppercase tracking-wider">
+                      <tr className="bg-secondary/30 text-gray-500 font-semibold border-b border-border text-xs uppercase tracking-wider">
                         <th className="p-4">Ім'я</th>
                         <th className="p-4">Email</th>
                         <th className="p-4">Роль (Клік для зміни)</th>
@@ -491,7 +491,7 @@ export default function SettingsPage() {
                         <th className="p-4 text-right">Дії</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5 text-gray-300">
+                    <tbody className="divide-y divide-border/50 text-gray-300">
                       {users.length > 0 ? (
                        users.map((user) => (
                           <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
@@ -554,7 +554,7 @@ export default function SettingsPage() {
         {activeTab === 'security' && (
           <div className="col-span-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="glass-panel border-none">
+              <Card className="bg-card border border-border rounded-xl">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <Database size={20} className="text-purple-400" /> Резервне копіювання
@@ -565,16 +565,16 @@ export default function SettingsPage() {
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-400 uppercase">Періодичність</label>
                       <select value={backupInterval} onChange={(e) => setBackupInterval(e.target.value)} className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/50">
-                        <option value="hourly" className="bg-[#141416]">Щогодини</option>
-                        <option value="daily" className="bg-[#141416]">Щодня о 03:00</option>
-                        <option value="weekly" className="bg-[#141416]">Щотижня (Нд)</option>
+                        <option value="hourly" className="bg-card">Щогодини</option>
+                        <option value="daily" className="bg-card">Щодня о 03:00</option>
+                        <option value="weekly" className="bg-card">Щотижня (Нд)</option>
                       </select>
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-400 uppercase">Сховище</label>
                       <select value={backupTarget} onChange={(e) => setBackupTarget(e.target.value)} className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/50">
-                        <option value="local" className="bg-[#141416]">Локальний диск</option>
-                        <option value="s3" className="bg-[#141416]">Хмара AWS S3</option>
+                        <option value="local" className="bg-card">Локальний диск</option>
+                        <option value="s3" className="bg-card">Хмара AWS S3</option>
                       </select>
                     </div>
                   </div>
@@ -588,7 +588,7 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="glass-panel border-none bg-red-500/5 backdrop-blur-md border border-red-500/10">
+              <Card className="border border-red-500/30 rounded-xl bg-red-500/5">
                 <CardHeader>
                   <CardTitle className="text-xl text-white flex items-center gap-2">
                     <SettingsIcon size={20} className="text-red-400" /> Небезпечна зона
@@ -615,7 +615,7 @@ export default function SettingsPage() {
 
         {activeTab === 'audit' && (
           <div className="col-span-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <Card className="glass-panel border-none">
+            <Card className="bg-card border border-border rounded-xl">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl text-white flex items-center gap-2">
                   <ShieldAlert size={20} className="text-amber-400" /> Системні логи
@@ -635,7 +635,7 @@ export default function SettingsPage() {
 
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="bg-white/5 text-gray-400 font-semibold border-b border-white/5 text-xs uppercase tracking-wider">
+                      <tr className="bg-secondary/30 text-gray-500 font-semibold border-b border-border text-xs uppercase tracking-wider">
                         <th className="p-4">Час</th>
                         <th className="p-4">Користувач / Роль</th>
                         <th className="p-4">Тип</th>
@@ -643,7 +643,7 @@ export default function SettingsPage() {
                         <th className="p-4">Повідомлення</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5 text-gray-300">
+                    <tbody className="divide-y divide-border/50 text-gray-300">
                       {realLogs.length > 0 ? (
                         realLogs.map((log) => (
                           <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
@@ -699,7 +699,7 @@ export default function SettingsPage() {
       {/* МОДАЛЬНЕ ВІКНО: СТВОРЕННЯ КОРИСТУВАЧА */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141416] border border-white/10 rounded-2xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-white">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-foreground">
             <div className="p-6 pb-4 border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-3 text-blue-400">
                 <UserPlus size={22} />
@@ -718,7 +718,7 @@ export default function SettingsPage() {
                     placeholder="Олександр Коваленко" 
                     value={newUser.name} 
                     onChange={(e) => setNewUser({...newUser, name: e.target.value})} 
-                    className="bg-black/40 border-white/10 text-white focus-visible:ring-blue-500/50" 
+                    className="bg-secondary/50 border-border text-foreground focus-visible:ring-primary/50" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -729,7 +729,7 @@ export default function SettingsPage() {
                     placeholder="example@corp.com" 
                     value={newUser.email} 
                     onChange={(e) => setNewUser({...newUser, email: e.target.value})} 
-                    className="bg-black/40 border-white/10 text-white focus-visible:ring-blue-500/50" 
+                    className="bg-secondary/50 border-border text-foreground focus-visible:ring-primary/50" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -740,7 +740,7 @@ export default function SettingsPage() {
                     placeholder="••••••••" 
                     value={newUser.password} 
                     onChange={(e) => setNewUser({...newUser, password: e.target.value})} 
-                    className="bg-black/40 border-white/10 text-white focus-visible:ring-blue-500/50" 
+                    className="bg-secondary/50 border-border text-foreground focus-visible:ring-primary/50" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -750,8 +750,8 @@ export default function SettingsPage() {
                     onChange={(e) => setNewUser({...newUser, role: e.target.value})} 
                     className="w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   >
-                    <option value="tech" className="bg-[#141416]">🛠️ Технік (Доступ до обробки активів)</option>
-                    <option value="admin" className="bg-[#141416]">👑 Адміністратор (Повний доступ)</option>
+                    <option value="tech" className="bg-card">🛠️ Технік (Доступ до обробки активів)</option>
+                    <option value="admin" className="bg-card">👑 Адміністратор (Повний доступ)</option>
                   </select>
                 </div>
               </div>
@@ -770,7 +770,7 @@ export default function SettingsPage() {
       {/* МОДАЛЬНЕ ВІКНО: РЕДАГУВАННЯ КОРИСТУВАЧА */}
       {isEditModalOpen && editingUser && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141416] border border-white/10 rounded-2xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-white">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-foreground">
             <div className="p-6 pb-4 border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-3 text-blue-400">
                 <SettingsIcon size={22} />
@@ -788,7 +788,7 @@ export default function SettingsPage() {
                     required
                     value={editingUser.name} 
                     onChange={(e) => setEditingUser({...editingUser, name: e.target.value})} 
-                    className="bg-black/40 border-white/10 text-white focus-visible:ring-blue-500/50" 
+                    className="bg-secondary/50 border-border text-foreground focus-visible:ring-primary/50" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -798,7 +798,7 @@ export default function SettingsPage() {
                     type="email"
                     value={editingUser.email} 
                     onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} 
-                    className="bg-black/40 border-white/10 text-white focus-visible:ring-blue-500/50" 
+                    className="bg-secondary/50 border-border text-foreground focus-visible:ring-primary/50" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -810,8 +810,8 @@ export default function SettingsPage() {
                     onChange={(e) => setEditingUser({...editingUser, role: e.target.value})} 
                     className="w-full rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   >
-                    <option value="tech" className="bg-[#141416]">🛠️ Технік (Обмежений доступ)</option>
-                    <option value="admin" className="bg-[#141416]">👑 Адміністратор (Повний доступ)</option>
+                    <option value="tech" className="bg-card">🛠️ Технік (Обмежений доступ)</option>
+                    <option value="admin" className="bg-card">👑 Адміністратор (Повний доступ)</option>
                   </select>
                 </div>
               </div>
@@ -830,7 +830,7 @@ export default function SettingsPage() {
       {/* МОДАЛЬНЕ ВІКНО: СКИДАННЯ БД */}
       {isResetModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141416] border border-red-500/30 rounded-2xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-card border border-red-500/30 rounded-2xl max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6 pb-4 border-b border-white/5 flex items-start justify-between">
               <div className="flex items-center gap-3 text-red-400">
                 <AlertOctagon size={24} />

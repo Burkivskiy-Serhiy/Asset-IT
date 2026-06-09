@@ -128,22 +128,22 @@ export default function LicensesPage() {
 
       {/* РЕАЛЬНІ ВІДЖЕТИ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-panel p-5 rounded-2xl flex items-center gap-4 border border-border">
+        <div className="bg-card p-5 rounded-2xl flex items-center gap-4 border border-border">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500"><Key size={24} /></div>
           <div><p className="text-sm font-medium text-muted-foreground">Всього в базі</p><h3 className="text-2xl font-bold">{totalLicenses}</h3></div>
         </div>
-        <div className="glass-panel p-5 rounded-2xl flex items-center gap-4 border border-border">
+        <div className="bg-card p-5 rounded-2xl flex items-center gap-4 border border-border">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-500"><ShieldCheck size={24} /></div>
           <div><p className="text-sm font-medium text-muted-foreground">Активні</p><h3 className="text-2xl font-bold">{activeCount}</h3></div>
         </div>
-        <div className="glass-panel p-5 rounded-2xl flex items-center gap-4 border border-border">
+        <div className="bg-card p-5 rounded-2xl flex items-center gap-4 border border-border">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-500/10 text-amber-500"><AlertTriangle size={24} /></div>
           <div><p className="text-sm font-medium text-muted-foreground">Увага / Протерміновані</p><h3 className="text-2xl font-bold">{attentionCount}</h3></div>
         </div>
       </div>
 
       {/* Таблиця */}
-      <div className="glass-panel border border-border rounded-2xl overflow-hidden flex flex-col">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col">
         {/* Пошук */}
         <div className="p-4 border-b border-border flex justify-between items-center bg-muted/10">
           <div className="relative w-full max-w-sm">

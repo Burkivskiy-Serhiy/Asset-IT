@@ -1,8 +1,6 @@
-import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { sendSlackNotification } from '@/lib/slack';
-
-const sql = neon(process.env.DATABASE_URL!);
 
 export async function PUT(req: Request, { params }: { params: any }) {
   try {
@@ -12,39 +10,32 @@ export async function PUT(req: Request, { params }: { params: any }) {
     console.log(`Спроба оновлення активу з ID: ${id}`);
 
     const body = await req.json();
-    const { name, status, category, brand, model, serial_number, specs, assignedTo } = body;
+    const { name, status, category, brand, model, serial_number, specs, assignedTo, location } = body;
 
     let userToStore = assignedTo || 'Не призначено';
     if (['retired', 'missing'].includes(status)) {
       userToStore = 'Не призначено';
     }
 
-    const updatedAsset = await sql`
-      UPDATE assets 
-      SET 
-        name = ${name}, 
-        type = ${category || 'Інше'}, 
-        status = ${status}, 
-        category = ${category}, 
-        brand = ${brand || null}, 
-        model = ${model || null}, 
-        "serialNumber" = ${serial_number || null}, 
-        specs = ${specs || null},
-        "user" = ${userToStore},
-        "updatedAt" = NOW()
-      WHERE id = ${id}
-      RETURNING *;
-    `;
-
-    if (updatedAsset.length === 0) {
-      return NextResponse.json({ error: 'Актив не знайдено' }, { status: 404 });
-    }
-
-    const asset = updatedAsset[0];
+    const asset = await prisma.asset.update({
+      where: { id },
+      data: {
+        name,
+        type: category || 'Інше',
+        status,
+        category,
+        brand: brand || null,
+        model: model || null,
+        serialNumber: serial_number || null,
+        specs: specs || null,
+        user: userToStore,
+        location: location || undefined
+      }
+    });
 
     try {
-      const settingsResult = await sql`SELECT "slackNotif", "slackWebhook" FROM settings LIMIT 1`;
-      const settings = settingsResult[0];
+      const settingsResult = await prisma.systemSettings.findFirst();
+      const settings = settingsResult;
 
       if (settings && settings.slackNotif && settings.slackWebhook) {
         const payload = {
@@ -84,21 +75,13 @@ export async function DELETE(req: Request, { params }: { params: any }) {
 
     console.log(`Спроба видалення активу з ID: ${id}`);
 
-    const deletedAsset = await sql`
-      DELETE FROM assets 
-      WHERE id = ${id}
-      RETURNING *;
-    `;
-
-    if (deletedAsset.length === 0) {
-      return NextResponse.json({ error: 'Актив не знайдено' }, { status: 404 });
-    }
-
-    const asset = deletedAsset[0];
+    const asset = await prisma.asset.delete({
+      where: { id }
+    });
 
     try {
-      const settingsResult = await sql`SELECT "slackNotif", "slackWebhook" FROM settings LIMIT 1`;
-      const settings = settingsResult[0];
+      const settingsResult = await prisma.systemSettings.findFirst();
+      const settings = settingsResult;
 
       if (settings && settings.slackNotif && settings.slackWebhook) {
         const payload = {

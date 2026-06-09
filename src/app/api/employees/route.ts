@@ -113,7 +113,8 @@ export async function DELETE(req: Request) {
         where: { user: fullName },
         data: {
           user: 'Не призначено',
-          status: 'active'
+          status: 'active',
+          location: JSON.stringify({ office: 'Склад', floor: '', room: '' })
         }
       });
     }
@@ -126,5 +127,50 @@ export async function DELETE(req: Request) {
   } catch (error: any) {
     console.error('Помилка видалення працівника через Prisma:', error);
     return NextResponse.json({ error: error.message || 'Не вдалося видалити з БД' }, { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, name, role, dept, email, status } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID не вказано' }, { status: 400 });
+    }
+
+    const nameParts = name ? name.trim().split(/\s+/) : ['', ''];
+    const firstName = nameParts[0] || 'Співробітник';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    const updatedEmployee = await prisma.employee.update({
+      where: { id },
+      data: {
+        firstName,
+        lastName,
+        email,
+        position: role,
+        department: dept,
+        status: status === 'Активний' ? 'active' : status
+      }
+    });
+
+    // Automatically return assets to warehouse if the employee is fired
+    if (status === 'Звільнений') {
+      const fullName = `${firstName} ${lastName}`.trim();
+      await prisma.asset.updateMany({
+        where: { user: fullName },
+        data: {
+          user: 'Не призначено',
+          status: 'active', // Return to active stock
+          location: JSON.stringify({ office: 'Склад', floor: '', room: '' })
+        }
+      });
+    }
+
+    return NextResponse.json({ success: true, employee: updatedEmployee });
+  } catch (error: any) {
+    console.error('Помилка оновлення працівника через Prisma:', error);
+    return NextResponse.json({ error: error.message || 'Не вдалося оновити запис у БД' }, { status: 500 });
   }
 }

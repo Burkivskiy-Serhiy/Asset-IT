@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import { 
   Database, Activity, Wrench, Archive, 
   MoreVertical, ChevronDown, Check, X,
-  AlertOctagon, AlertTriangle, Info, Laptop, Monitor, Server, Network, Printer
+  AlertOctagon, AlertTriangle, Info, Laptop, Monitor, Server, Network, Printer,
+  DollarSign, Ticket, Percent
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -48,6 +49,64 @@ export default function DashboardPage() {
   
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+      
+      {/* KPI DASHBOARD SECTION */}
+      <div>
+        <h1 className="text-2xl font-bold text-white mb-4">Дашборд KPI</h1>
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Зведені метрики</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          
+          {/* Total Value */}
+          <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <DollarSign size={24} className="text-emerald-500" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Загальна вартість активів</p>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-white">
+                  {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', maximumFractionDigits: 0 }).format(stats?.totalValue || 0)}
+                </span>
+                <span className="text-xs text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded font-medium">+4.2%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* License Usage */}
+          <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+              <Percent size={24} className="text-blue-500" />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between items-end mb-1">
+                <p className="text-sm text-gray-400">Використання ліцензій</p>
+                <span className="text-xl font-bold text-white">{stats?.licenseUsage || 0}%</span>
+              </div>
+              <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-500 rounded-full" 
+                  style={{ width: `${stats?.licenseUsage || 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Open Tickets */}
+          <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+              <Ticket size={24} className="text-yellow-500" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Відкриті тікети</p>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-white">{stats?.openTickets || 0}</span>
+                <span className="text-xs text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-medium">Потребують уваги</span>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
       
       {/* KPI CARDS (4 Columns) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -160,9 +219,6 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-base font-semibold text-white">Статистика за категоріями</h2>
-            <button className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-3 py-1.5 rounded-md hover:bg-primary/20 transition-colors">
-              Грудень <ChevronDown size={14} />
-            </button>
           </div>
           
           {/* Chart Header Stats */}
@@ -174,55 +230,43 @@ export default function DashboardPage() {
             <div className="flex gap-8">
               <div className="border-l-2 border-primary pl-4">
                 <p className="text-xs text-gray-400 mb-1">Активне обладнання</p>
-                <p className="text-lg font-bold text-white">180 <span className="text-xs text-gray-500 font-normal">Шт</span></p>
+                <p className="text-lg font-bold text-white">{stats?.byStatus?.active || 0} <span className="text-xs text-gray-500 font-normal">Шт</span></p>
               </div>
               <div className="border-l-2 border-yellow-500 pl-4">
                 <p className="text-xs text-gray-400 mb-1">В ремонті</p>
-                <p className="text-lg font-bold text-white">59 <span className="text-xs text-gray-500 font-normal">Шт</span></p>
+                <p className="text-lg font-bold text-white">{stats?.byStatus?.maintenance || 0} <span className="text-xs text-gray-500 font-normal">Шт</span></p>
               </div>
               <div className="border-l-2 border-red-500 pl-4">
                 <p className="text-xs text-gray-400 mb-1">Списано</p>
-                <p className="text-lg font-bold text-white">10 <span className="text-xs text-gray-500 font-normal">Шт</span></p>
+                <p className="text-lg font-bold text-white">{stats?.byStatus?.retired || 0} <span className="text-xs text-gray-500 font-normal">Шт</span></p>
               </div>
             </div>
           </div>
 
-          {/* Fake Bar Chart */}
-          <div className="h-48 flex items-end justify-between gap-2 mt-4 relative">
-            {/* Grid lines */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-              {[40, 30, 20, 10, 0].map(val => (
-                <div key={val} className="w-full border-t border-border/50 flex items-center h-0 relative">
-                  <span className="absolute -left-6 text-[10px] text-gray-600">{val}</span>
-                </div>
-              ))}
-            </div>
-            
-            {/* Bars */}
-            {Array.from({ length: 20 }).map((_, i) => {
-              const h1 = Math.floor(Math.random() * 40) + 10;
-              const h2 = Math.floor(Math.random() * 20) + 5;
-              return (
-                <div key={i} className="flex flex-col items-center gap-1 w-full max-w-[12px] z-10 group relative">
-                  {/* Tooltip */}
-                  <div className="absolute -top-10 bg-secondary px-2 py-1 rounded text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                    День {i + 1}
+          {/* Real Category Bars */}
+          <div className="mt-6 space-y-5 h-48 overflow-y-auto custom-scrollbar pr-2">
+            {Object.entries(stats?.byCategory || {}).length > 0 ? (
+              Object.entries(stats?.byCategory || {})
+                .sort(([, a], [, b]) => (b as number) - (a as number))
+                .map(([cat, count]: [string, any]) => (
+                <div key={cat}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-300 flex items-center gap-2">{getCategoryIcon(cat)} {cat}</span>
+                    <span className="text-white font-bold">{count} <span className="text-gray-500 font-normal">шт</span></span>
                   </div>
-                  
-                  <div className="w-full flex flex-col justify-end gap-0.5 h-full">
+                  <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
                     <motion.div 
-                      initial={{ height: 0 }} animate={{ height: `${h2}%` }} transition={{ duration: 0.5, delay: i * 0.02 }}
-                      className="w-full bg-yellow-500/80 rounded-t-sm" 
-                    />
-                    <motion.div 
-                      initial={{ height: 0 }} animate={{ height: `${h1}%` }} transition={{ duration: 0.5, delay: i * 0.02 }}
-                      className="w-full bg-primary rounded-t-sm" 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(count / Math.max(stats?.total || 1, 1)) * 100}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className="h-full bg-primary rounded-full" 
                     />
                   </div>
-                  <span className="text-[8px] text-gray-600 mt-2">{(i+1).toString().padStart(2, '0')}</span>
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500 text-sm">Немає даних за категоріями</div>
+            )}
           </div>
         </div>
 
@@ -278,34 +322,29 @@ export default function DashboardPage() {
           </div>
           
           <div className="space-y-4">
-            {[
-              { title: 'Заміна монітору', user: 'Олександр П.', desc: 'Мерехтить екран при роботі', type: 'Hardware' },
-              { title: 'Доступ до CRM', user: 'Ірина М.', desc: 'Потрібен доступ для нового проекту', type: 'Software' },
-              { title: 'Налаштування VPN', user: 'Віталій К.', desc: 'Не можу підключитися з дому', type: 'Network' }
-            ].map((ticket, i) => (
+            {stats?.recentTickets?.length > 0 ? stats.recentTickets.map((ticket: any, i: number) => (
               <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3 border-b border-border/50 last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-sm font-bold text-gray-300">
-                    {ticket.user.split(' ')[0][0]}{ticket.user.split(' ')[1][0]}
+                    {ticket.user ? ticket.user.slice(0, 2).toUpperCase() : 'US'}
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-white mb-0.5">{ticket.title}</h4>
-                    <p className="text-xs text-gray-500">{ticket.desc}</p>
+                    <p className="text-xs text-gray-500 line-clamp-1">{ticket.description || 'Без опису'}</p>
                     <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 inline-block mt-1">
-                      {ticket.type}
+                      {ticket.priority || 'Середній'}
                     </span>
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button className="flex items-center justify-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
-                    Прийняти
-                  </button>
-                  <button className="flex items-center justify-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
-                    Відхилити
-                  </button>
+                  <Link href="/helpdesk" className="flex items-center justify-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                    Деталі
+                  </Link>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-6 text-gray-500 text-sm">Немає нових заявок</div>
+            )}
           </div>
         </div>
 
@@ -329,38 +368,24 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50 text-gray-300">
-                <tr className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-4 py-3 font-medium text-white">Закінчення ліцензій Windows</td>
-                  <td className="px-4 py-3">Software</td>
-                  <td className="px-4 py-3 text-xs">27 Лютого (3 Дні)</td>
-                  <td className="px-4 py-3">
-                    <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Critical</span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-4 py-3 font-medium text-white">Оновлення серверів</td>
-                  <td className="px-4 py-3">Infrastructure</td>
-                  <td className="px-4 py-3 text-xs">28 Лютого (4 Дні)</td>
-                  <td className="px-4 py-3">
-                    <span className="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Critical</span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-4 py-3 font-medium text-white">Інвентаризація філіалу</td>
-                  <td className="px-4 py-3">Compliance</td>
-                  <td className="px-4 py-3 text-xs">1 Березня (7 Днів)</td>
-                  <td className="px-4 py-3">
-                    <span className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Important</span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-4 py-3 font-medium text-white">Закупівля мишок/клавіатур</td>
-                  <td className="px-4 py-3">Hardware</td>
-                  <td className="px-4 py-3 text-xs">18 Березня (20 Днів)</td>
-                  <td className="px-4 py-3">
-                    <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Upcoming</span>
-                  </td>
-                </tr>
+                {stats?.systemAlerts?.length > 0 ? stats.systemAlerts.map((alert: any, i: number) => (
+                  <tr key={i} className="hover:bg-secondary/20 transition-colors">
+                    <td className="px-4 py-3 font-medium text-white">{alert.title}</td>
+                    <td className="px-4 py-3">{alert.category}</td>
+                    <td className="px-4 py-3 text-xs">{alert.date}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${alert.importance === 'Critical' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
+                        {alert.importance}
+                      </span>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-center text-gray-500 text-sm">
+                      Немає активних сповіщень
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -385,6 +410,9 @@ function getCategoryIcon(category: string) {
 
 const mockData = {
   total: 200,
+  totalValue: 1245000,
+  licenseUsage: 85,
+  openTickets: 12,
   byStatus: { active: 180, maintenance: 10, retired: 8, missing: 2 },
   byCategory: { 'Ноутбук': 80, 'Монітор': 60, 'Сервер': 10, 'Мережа': 20, 'Принтер': 30 },
   recentAssets: [

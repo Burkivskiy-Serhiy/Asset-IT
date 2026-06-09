@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Database, Laptop, Server, Monitor, Printer, Network, Pencil, Trash2, X, Search, User } from 'lucide-react';
+import { Plus, Database, Laptop, Server, Monitor, Printer, Network, Pencil, Trash2, X, Search, User, MapPin, QrCode } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import QRCodeModal from '@/components/ui/QRCodeModal';
+import QRScannerModal from '@/components/ui/QRScannerModal';
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
@@ -30,6 +32,10 @@ export default function AssetsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
 
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [selectedQRAsset, setSelectedQRAsset] = useState<any | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     status: 'active',
@@ -38,12 +44,16 @@ export default function AssetsPage() {
     model: '',
     serial_number: '',
     specs: '',
-    assignedTo: '' 
+    assignedTo: '',
+    locationOffice: 'Головний офіс',
+    locationFloor: '',
+    locationRoom: ''
   });
 
   const fetchAssets = async () => {
     try {
-      const res = await fetch('/api/assets');
+      const timestamp = new Date().getTime();
+      const res = await fetch(`/api/assets?t=${timestamp}`, { cache: 'no-store' });
       const data = await res.json();
       
       if (Array.isArray(data)) {
@@ -84,6 +94,14 @@ export default function AssetsPage() {
   const handleEditClick = (asset: any) => {
     setIsEditing(true);
     setEditId(asset.id);
+    let parsedLocation = { office: 'Головний офіс', floor: '', room: '' };
+    try {
+      const parsed = JSON.parse(asset.location || '{}');
+      parsedLocation = { ...parsedLocation, ...parsed };
+    } catch (e) {
+      if (asset.location) parsedLocation.office = asset.location;
+    }
+
     setFormData({
       name: asset.name,
       status: asset.status,
@@ -92,14 +110,17 @@ export default function AssetsPage() {
       model: asset.model || '',
       serial_number: asset.serial_number || '',
       specs: asset.specs || '',
-      assignedTo: asset.assignedTo || '' 
+      assignedTo: asset.assignedTo || '',
+      locationOffice: parsedLocation.office || 'Головний офіс',
+      locationFloor: parsedLocation.floor || '',
+      locationRoom: parsedLocation.room || ''
     });
   };
 
   const cancelEdit = () => {
     setIsEditing(false);
     setEditId(null);
-    setFormData({ name: '', status: 'active', category: 'Ноутбук', brand: '', model: '', serial_number: '', specs: '', assignedTo: '' });
+    setFormData({ name: '', status: 'active', category: 'Ноутбук', brand: '', model: '', serial_number: '', specs: '', assignedTo: '', locationOffice: 'Головний офіс', locationFloor: '', locationRoom: '' });
   };
 
   const handleDelete = async (id: number) => {
@@ -153,10 +174,16 @@ export default function AssetsPage() {
       const url = isEditing ? `/api/assets/${editId}` : '/api/assets';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const dataToSend = { ...formData };
+      const dataToSend: any = { ...formData };
       if (['retired', 'missing'].includes(dataToSend.status)) {
         dataToSend.assignedTo = '';
       }
+      
+      dataToSend.location = JSON.stringify({
+        office: formData.locationOffice,
+        floor: formData.locationFloor,
+        room: formData.locationRoom
+      });
 
       const res = await fetch(url, {
         method: method,
@@ -224,7 +251,7 @@ export default function AssetsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* ФОРМА */}
-        <div className="glass-panel p-6 h-fit sticky top-4 border-none">
+        <div className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl h-fit sticky top-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <Plus size={20} className={isEditing ? "text-amber-400" : "text-primary"} />
@@ -240,13 +267,13 @@ export default function AssetsPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-sm text-gray-400">Назва</label>
-              <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none" />
+              <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-400">Категорія</label>
-                <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none">
+                <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300">
                   <option>Ноутбук</option>
                   <option>Монітор</option>
                   <option>Сервер</option>
@@ -257,7 +284,7 @@ export default function AssetsPage() {
               </div>
               <div>
                 <label className="text-sm text-gray-400">Статус</label>
-                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none">
+                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300">
                   <option value="active">Активний</option>
                   <option value="maintenance">В ремонті</option>
                   <option value="retired">Списаний</option>
@@ -269,18 +296,18 @@ export default function AssetsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-400">Бренд</label>
-                <input type="text" placeholder="Dell" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none" />
+                <input type="text" placeholder="Dell" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300" />
               </div>
               <div>
                 <label className="text-sm text-gray-400">Модель</label>
-                <input type="text" placeholder="XPS 15" value={formData.model} onChange={e => setFormData({...formData, model: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none" />
+                <input type="text" placeholder="XPS 15" value={formData.model} onChange={e => setFormData({...formData, model: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-400">Серійний номер / S/N</label>
-                <input type="text" value={formData.serial_number} onChange={e => setFormData({...formData, serial_number: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none" />
+                <input type="text" value={formData.serial_number} onChange={e => setFormData({...formData, serial_number: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300" />
               </div>
               <div>
                 <label className="text-sm text-gray-400 flex items-center gap-1"><User size={14} /> Закріплено за</label>
@@ -288,23 +315,51 @@ export default function AssetsPage() {
                   value={formData.assignedTo} 
                   onChange={e => setFormData({...formData, assignedTo: e.target.value})} 
                   disabled={['retired', 'missing'].includes(formData.status)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none disabled:opacity-50"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300 disabled:opacity-50"
                 >
                   <option value="">-- На складі --</option>
-                  {employees.map(emp => (
+                  {employees
+                    .filter(emp => emp.status !== 'Звільнений')
+                    .map(emp => (
                     <option key={emp.id} value={emp.name}>{emp.name}</option>
                   ))}
                 </select>
               </div>
             </div>
 
-            <div>
-              <label className="text-sm text-gray-400">Характеристики</label>
-              <textarea rows={2} value={formData.specs} onChange={e => setFormData({...formData, specs: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-white mt-1 focus:border-primary focus:outline-none"></textarea>
+            {/* МІСЦЕЗНАХОДЖЕННЯ */}
+            <div className="space-y-3 pt-2 border-t border-white/5">
+              <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-1.5"><MapPin size={16} className="text-primary"/> Геолокація</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="text-xs text-gray-400">Офіс / Будівля</label>
+                  <select value={formData.locationOffice} onChange={e => setFormData({...formData, locationOffice: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300">
+                    <option value="Головний офіс">Головний офіс</option>
+                    <option value="Склад">Склад</option>
+                    <option value="Віддалено">Віддалено (Home Office)</option>
+                    <option value="Філіал 1">Філіал 1</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-400">Поверх</label>
+                    <input type="text" placeholder="Напр. 3" value={formData.locationFloor} onChange={e => setFormData({...formData, locationFloor: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400">Кімната</label>
+                    <input type="text" placeholder="Напр. 304" value={formData.locationRoom} onChange={e => setFormData({...formData, locationRoom: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300" />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <button type="submit" className={`w-full font-medium py-2.5 rounded-lg mt-2 transition-all duration-300 text-white ${
-              isEditing ? 'bg-amber-500 hover:bg-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'bg-primary hover:bg-primary/90 shadow-[0_0_20px_rgba(var(--primary),0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.7)]'
+            <div>
+              <label className="text-sm text-gray-400">Характеристики</label>
+              <textarea rows={2} value={formData.specs} onChange={e => setFormData({...formData, specs: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1.5 focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300"></textarea>
+            </div>
+
+            <button type="submit" className={`w-full font-semibold py-3 rounded-xl mt-4 shadow-lg transition-all duration-300 text-white ${
+              isEditing ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-amber-500/20' : 'bg-gradient-to-r from-primary to-blue-600 hover:from-primary/80 hover:to-blue-500 shadow-primary/20'
             }`}>
               {isEditing ? 'Зберегти зміни' : 'Зберегти в каталог'}
             </button>
@@ -312,7 +367,7 @@ export default function AssetsPage() {
         </div>
 
         {/* ТАБЛИЦЯ ТА ПАНЕЛЬ ФІЛЬТРІВ */}
-        <div className="lg:col-span-2 glass-panel p-6 border-none">
+        <div className="lg:col-span-2 bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -321,15 +376,24 @@ export default function AssetsPage() {
                 placeholder="Пошук за назвою, S/N або співробітником..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white focus:border-primary focus:outline-none transition-colors"
+                className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300"
               />
             </div>
             
+            <button 
+              onClick={() => setIsScannerOpen(true)}
+              className="px-4 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl hover:bg-primary/20 transition-colors flex items-center justify-center gap-2 font-medium shrink-0"
+              title="Сканувати QR або штрих-код"
+            >
+              <QrCode size={18} />
+              <span className="hidden sm:inline">Сканувати</span>
+            </button>
+
             <div className="flex gap-4">
               <select 
                 value={filterCategory} 
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className="bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none transition-colors"
+                className="bg-black/40 border border-white/10 rounded-xl py-2.5 px-4 text-white focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300"
               >
                 <option value="all">Всі категорії</option>
                 <option value="Ноутбук">Ноутбук</option>
@@ -343,7 +407,7 @@ export default function AssetsPage() {
               <select 
                 value={filterStatus} 
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-white focus:border-primary focus:outline-none transition-colors"
+                className="bg-black/40 border border-white/10 rounded-xl py-2.5 px-4 text-white focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300"
               >
                 <option value="all">Всі статуси</option>
                 <option value="active">Активні</option>
@@ -360,25 +424,26 @@ export default function AssetsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/10 text-sm text-gray-400">
-                    <th className="pb-3 font-medium">Обладнання</th>
-                    <th className="pb-3 font-medium">Модель / S/N</th>
-                    <th className="pb-3 font-medium">Статус</th>
-                    <th className="pb-3 font-medium">Користувач</th>
-                    <th className="pb-3 font-medium text-right">Дії</th>
+                  <tr className="bg-black/20 text-xs text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 font-medium rounded-tl-lg">Обладнання</th>
+                    <th className="px-4 py-3 font-medium">Модель / S/N</th>
+                    <th className="px-4 py-3 font-medium">Статус</th>
+                    <th className="px-4 py-3 font-medium">Користувач</th>
+                    <th className="px-4 py-3 font-medium text-right rounded-tr-lg">Дії</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAssets.map((asset) => (
+                  {filteredAssets.map((asset, index) => (
                     <motion.tr 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }} 
+                      initial={{ opacity: 0, y: 10 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      transition={{ delay: index * 0.03 }}
                       key={asset.id} 
-                      className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                      className="border-b border-white/5 hover:bg-white/5 transition-all duration-200 group"
                     >
                       <td className="py-4">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 bg-white/5 rounded-lg text-gray-400">
+                          <div className="p-2.5 bg-secondary/50 rounded-xl text-gray-300 group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                             {getCategoryIcon(asset.category)}
                           </div>
                           <div>
@@ -391,8 +456,8 @@ export default function AssetsPage() {
                         <p className="text-sm text-gray-300">{asset.brand} {asset.model !== '-' && asset.model}</p>
                         <p className="text-xs text-gray-500 font-mono">{asset.serial_number || 'S/N відсутній'}</p>
                       </td>
-                      <td className="py-4">
-                        <span className={`px-2 py-1 text-xs rounded-full border ${
+                      <td className="px-4 py-4">
+                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded border ${
                           asset.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
                           asset.status === 'maintenance' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 
                           asset.status === 'retired' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
@@ -401,20 +466,65 @@ export default function AssetsPage() {
                           {asset.status === 'active' ? 'Активний' : asset.status === 'maintenance' ? 'В ремонті' : asset.status === 'retired' ? 'Списаний' : 'Втрачений'}
                         </span>
                       </td>
-                      <td className="py-4">
+                      <td className="px-4 py-4">
                         {asset.assignedTo ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-                              {asset.assignedTo.charAt(0)}
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                                {asset.assignedTo.charAt(0)}
+                              </div>
+                              <span className="text-sm text-gray-300">{asset.assignedTo}</span>
                             </div>
-                            <span className="text-sm text-gray-300">{asset.assignedTo}</span>
+                            
+                            {/* Відображення локації */}
+                            {asset.location && (
+                              <div className="flex flex-col text-[11px] text-gray-500 pl-8">
+                                {(() => {
+                                  try {
+                                    const loc = JSON.parse(asset.location);
+                                    if (loc.office === 'Віддалено') return <span className="flex items-center gap-1"><MapPin size={10} /> Віддалено</span>;
+                                    const parts = [loc.office];
+                                    if (loc.floor) parts.push(`пов. ${loc.floor}`);
+                                    if (loc.room) parts.push(`кім. ${loc.room}`);
+                                    return <span className="flex items-center gap-1"><MapPin size={10} /> {parts.join(', ')}</span>;
+                                  } catch (e) {
+                                    return <span className="flex items-center gap-1"><MapPin size={10} /> {asset.location}</span>;
+                                  }
+                                })()}
+                              </div>
+                            )}
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-600 italic">На складі</span>
+                          <div className="flex flex-col gap-1.5">
+                            <span className="text-sm text-gray-600 italic">На складі</span>
+                            {/* Відображення локації для складу */}
+                            {asset.location && (
+                              <div className="flex flex-col text-[11px] text-gray-500">
+                                {(() => {
+                                  try {
+                                    const loc = JSON.parse(asset.location);
+                                    const parts = [loc.office];
+                                    if (loc.floor) parts.push(`пов. ${loc.floor}`);
+                                    if (loc.room) parts.push(`кім. ${loc.room}`);
+                                    return <span className="flex items-center gap-1"><MapPin size={10} /> {parts.join(', ')}</span>;
+                                  } catch (e) {
+                                    return <span className="flex items-center gap-1"><MapPin size={10} /> {asset.location}</span>;
+                                  }
+                                })()}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </td>
-                      <td className="py-4 text-right">
+                      <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <button 
+                            onClick={() => { setSelectedQRAsset(asset); setIsQRModalOpen(true); }}
+                            className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                            title="Показати QR-код"
+                          >
+                            <QrCode size={15} />
+                          </button>
                           <button 
                             onClick={() => handleEditClick(asset)}
                             className="p-1.5 text-gray-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-colors"
@@ -449,6 +559,20 @@ export default function AssetsPage() {
           )}
         </div>
       </div>
+
+      <QRCodeModal 
+        isOpen={isQRModalOpen} 
+        onClose={() => setIsQRModalOpen(false)} 
+        asset={selectedQRAsset} 
+      />
+      
+      <QRScannerModal 
+        isOpen={isScannerOpen} 
+        onClose={() => setIsScannerOpen(false)} 
+        onScan={(decodedText) => {
+          setSearchQuery(decodedText);
+        }} 
+      />
     </div>
   );
 }

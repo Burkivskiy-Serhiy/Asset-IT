@@ -2,16 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { Search, Bell, LogOut } from 'lucide-react';
+import { Search, Bell, LogOut, MessageSquare } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import SupportChat from '@/components/ui/SupportChat';
 
 export default function Header() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const loading = status === 'loading';
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -20,6 +29,31 @@ export default function Header() {
       return () => clearInterval(interval);
     }
   }, [status]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.trim().length >= 2) {
+        setIsSearching(true);
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`);
+          if (res.ok) {
+            const data = await res.json();
+            setSearchResults(data);
+            setShowSearchDropdown(true);
+          }
+        } catch (error) {
+          console.error("Search error", error);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+        setShowSearchDropdown(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const fetchNotifications = async () => {
     try {
@@ -67,6 +101,10 @@ export default function Header() {
   };
   const currentDate = new Date().toLocaleDateString('uk-UA', dateOptions);
 
+  if (pathname === '/login') {
+    return null;
+  }
+
   return (
     <header className="w-full flex items-center justify-between py-6 px-8 bg-background border-b border-border sticky top-0 z-40">
       <div className="flex flex-col gap-1">
@@ -81,20 +119,75 @@ export default function Header() {
 
       <div className="flex items-center gap-6">
         {/* Search */}
-        <div className="relative hidden md:flex items-center">
-          <Search className="absolute left-3 text-gray-500" size={18} />
-          <input 
-            type="text" 
-            placeholder="Шукати будь-що..." 
-            className="bg-secondary/50 border border-border text-white text-sm rounded-full pl-10 pr-4 py-2 w-64 focus:outline-none focus:border-primary/50 transition-colors"
-          />
+        <div className="relative hidden md:flex flex-col items-center">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => { if (searchQuery.length >= 2) setShowSearchDropdown(true); }}
+              onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  router.push(`/assets?search=${encodeURIComponent(searchQuery.trim())}`);
+                  setShowSearchDropdown(false);
+                }
+              }}
+              placeholder="Глобальний пошук..." 
+              className="bg-secondary/50 border border-border text-white text-sm rounded-full pl-10 pr-4 py-2 w-64 focus:outline-none focus:border-primary/50 transition-colors"
+            />
+          </div>
+          
+          <AnimatePresence>
+            {showSearchDropdown && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                className="absolute top-full left-0 mt-2 w-full min-w-[300px] bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden"
+              >
+                {isSearching ? (
+                  <div className="p-4 text-center text-sm text-gray-500 animate-pulse">Пошук...</div>
+                ) : searchResults.length > 0 ? (
+                  <div className="max-h-64 overflow-y-auto">
+                    {searchResults.map((res: any, i: number) => (
+                      <button 
+                        key={`${res.type}-${res.id}-${i}`}
+                        onClick={() => {
+                          router.push(res.url);
+                          setSearchQuery('');
+                          setShowSearchDropdown(false);
+                        }}
+                        className="w-full text-left p-3 border-b border-border hover:bg-secondary/50 transition-colors flex flex-col gap-0.5"
+                      >
+                        <span className="text-sm font-medium text-white">{res.title}</span>
+                        <span className="text-[10px] uppercase text-primary font-bold tracking-wider">{res.type} <span className="text-gray-500 normal-case font-normal ml-1">• {res.subtitle}</span></span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-sm text-gray-500">Нічого не знайдено</div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Chat */}
+        <div className="relative flex items-center h-full">
+          <button 
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className="text-gray-400 hover:text-white transition-colors relative flex items-center justify-center"
+          >
+            <MessageSquare size={20} />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse border border-background"></span>
+          </button>
         </div>
 
         {/* Notifications */}
-        <div className="relative">
+        <div className="relative flex items-center h-full">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="text-gray-400 hover:text-white transition-colors relative"
+            className="text-gray-400 hover:text-white transition-colors relative flex items-center justify-center"
           >
             <Bell size={20} />
             {unreadCount > 0 && (
@@ -168,6 +261,8 @@ export default function Header() {
           </div>
         </div>
       </div>
+      
+      <SupportChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </header>
   );
 }

@@ -297,7 +297,7 @@ export default function MonitoringPage() {
 
   return (
     <div className="flex flex-col gap-6 min-h-screen text-white relative">
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/5 pb-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1">Моніторинг систем</h1>
           <p className="text-muted-foreground text-sm font-light">
@@ -306,7 +306,7 @@ export default function MonitoringPage() {
         </div>
         
         <div className="flex items-center gap-3 self-start sm:self-center">
-          <Button variant="outline" onClick={handleManualRefresh} className="border-white/5 bg-[#141416]/60 text-white hover:bg-white/5 gap-2">
+          <Button variant="outline" onClick={handleManualRefresh} className="border-border bg-secondary/50 text-foreground hover:bg-secondary gap-2">
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-primary" : ""} />
             Оновити метрики
           </Button>
@@ -317,7 +317,7 @@ export default function MonitoringPage() {
                 <Plus size={16} className="mr-1" /> Додати вузол
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-[#141416] border-white/10 text-white">
+            <DialogContent className="sm:max-w-[425px] bg-card border-border text-foreground">
               <DialogHeader>
                 <DialogTitle>Додати сервер на моніторинг</DialogTitle>
                 <DialogDescription className="text-gray-400">
@@ -327,15 +327,15 @@ export default function MonitoringPage() {
               <form onSubmit={handleAddServer} className="grid gap-4 py-2">
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-semibold text-gray-400 uppercase">Назва вузла / Хост</label>
-                  <Input required value={newServer.name} onChange={e => setNewServer({...newServer, name: e.target.value})} className="bg-white/5 border-white/10 focus:border-primary" placeholder="Наприклад: Redis Cache Node" />
+                  <Input required value={newServer.name} onChange={e => setNewServer({...newServer, name: e.target.value})} className="bg-secondary/50 border-border focus:border-primary" placeholder="Наприклад: Redis Cache Node" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-semibold text-gray-400 uppercase">IP адреса</label>
-                  <Input required value={newServer.ip} onChange={e => setNewServer({...newServer, ip: e.target.value})} className="bg-white/5 border-white/10 focus:border-primary" placeholder="192.168.1.55" />
+                  <Input required value={newServer.ip} onChange={e => setNewServer({...newServer, ip: e.target.value})} className="bg-secondary/50 border-border focus:border-primary" placeholder="192.168.1.55" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-semibold text-gray-400 uppercase">Тип призначення</label>
-                  <select value={newServer.type} onChange={e => setNewServer({...newServer, type: e.target.value as ServerNode['type']})} className="h-10 rounded-md bg-neutral-900 border border-white/10 px-3 text-sm text-white focus:border-primary focus:outline-none">
+                  <select value={newServer.type} onChange={e => setNewServer({...newServer, type: e.target.value as ServerNode['type']})} className="h-10 rounded-md bg-secondary/50 border border-border px-3 text-sm text-foreground focus:border-primary focus:outline-none">
                     <option value="api">Backend API Gateway</option>
                     <option value="database">Database Cluster</option>
                     <option value="frontend">Frontend Service</option>
@@ -343,7 +343,7 @@ export default function MonitoringPage() {
                   </select>
                 </div>
                 <DialogFooter className="mt-4 gap-2 sm:gap-0">
-                  <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="border-white/10 text-white hover:bg-white/5">Скасувати</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="border-border text-foreground hover:bg-secondary">Скасувати</Button>
                   <Button type="submit" className="bg-primary text-white">Підключити вузол</Button>
                 </DialogFooter>
               </form>
@@ -354,7 +354,7 @@ export default function MonitoringPage() {
 
       {/* Модалка Редагування */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-[#141416] border-white/10 text-white">
+        <DialogContent className="sm:max-w-[425px] bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle>Редагувати сервер</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -365,15 +365,15 @@ export default function MonitoringPage() {
             <form onSubmit={handleEditSubmit} className="grid gap-4 py-2">
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-gray-400 uppercase">Назва вузла / Хост</label>
-                <Input required value={serverToEdit.name} onChange={e => setServerToEdit({...serverToEdit, name: e.target.value})} className="bg-white/5 border-white/10 focus:border-primary" />
+                <Input required value={serverToEdit.name} onChange={e => setServerToEdit({...serverToEdit, name: e.target.value})} className="bg-secondary/50 border-border focus:border-primary" />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-gray-400 uppercase">IP адреса</label>
-                <Input required value={serverToEdit.ip} onChange={e => setServerToEdit({...serverToEdit, ip: e.target.value})} className="bg-white/5 border-white/10 focus:border-primary" />
+                <Input required value={serverToEdit.ip} onChange={e => setServerToEdit({...serverToEdit, ip: e.target.value})} className="bg-secondary/50 border-border focus:border-primary" />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-gray-400 uppercase">Тип призначення</label>
-                <select value={serverToEdit.type} onChange={e => setServerToEdit({...serverToEdit, type: e.target.value as ServerNode['type']})} className="h-10 rounded-md bg-neutral-900 border border-white/10 px-3 text-sm text-white focus:border-primary focus:outline-none">
+                <select value={serverToEdit.type} onChange={e => setServerToEdit({...serverToEdit, type: e.target.value as ServerNode['type']})} className="h-10 rounded-md bg-secondary/50 border border-border px-3 text-sm text-foreground focus:border-primary focus:outline-none">
                   <option value="api">Backend API Gateway</option>
                   <option value="database">Database Cluster</option>
                   <option value="frontend">Frontend Service</option>
@@ -381,7 +381,7 @@ export default function MonitoringPage() {
                 </select>
               </div>
               <DialogFooter className="mt-4 gap-2 sm:gap-0">
-                <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)} className="border-white/10 text-white hover:bg-white/5">Скасувати</Button>
+                <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)} className="border-border text-foreground hover:bg-secondary">Скасувати</Button>
                 <Button type="submit" className="bg-primary text-white">Зберегти зміни</Button>
               </DialogFooter>
             </form>
@@ -391,28 +391,28 @@ export default function MonitoringPage() {
 
       {/* Швидкі показники */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel p-4 border-none flex items-center justify-between">
+        <div className="bg-card border border-border p-4 rounded-xl flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 uppercase font-medium">Статус мережі</span>
             <span className="text-xl font-bold mt-1 text-emerald-400 flex items-center gap-1.5"><Wifi size={18} /> Стабільна</span>
           </div>
           <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-400"><Activity size={20} /></div>
         </div>
-        <div className="glass-panel p-4 border-none flex items-center justify-between">
+        <div className="bg-card border border-border p-4 rounded-xl flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 uppercase font-medium">Вузли в мережі</span>
             <span className="text-xl font-bold mt-1 text-white font-mono">{onlineCount} / {servers.length}</span>
           </div>
           <div className="p-3 rounded-lg bg-blue-500/10 text-blue-400"><Server size={20} /></div>
         </div>
-        <div className="glass-panel p-4 border-none flex items-center justify-between">
+        <div className="bg-card border border-border p-4 rounded-xl flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 uppercase font-medium">Середнє завантаження CPU</span>
             <span className="text-xl font-bold mt-1 text-white font-mono">{avgCpu}%</span>
           </div>
           <div className="p-3 rounded-lg bg-indigo-500/10 text-indigo-400"><Cpu size={20} /></div>
         </div>
-        <div className="glass-panel p-4 border-none flex items-center justify-between">
+        <div className="bg-card border border-border p-4 rounded-xl flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-xs text-gray-400 uppercase font-medium">Аномалії / Помилки</span>
             <span className="text-xl font-bold mt-1 text-amber-400 font-mono">{servers.filter(s => s.status === 'warning' || s.status === 'offline').length} активні</span>
@@ -423,12 +423,12 @@ export default function MonitoringPage() {
 
       <div className="w-full max-w-md relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-        <Input type="text" placeholder="Пошук за назвою хоста або IP..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 bg-[#141416]/60 border-white/5 rounded-xl text-white placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-primary" />
+        <Input type="text" placeholder="Пошук за назвою хоста або IP..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 bg-secondary/50 border-border rounded-xl text-foreground placeholder:text-gray-500 focus-visible:ring-1 focus-visible:ring-primary" />
       </div>
 
       {/* Список серверів на повну ширину */}
       <div className="w-full flex flex-col gap-3">
-        <div className="bg-[#141416]/60 backdrop-blur-md p-3 rounded-xl border border-white/5 flex items-center justify-between">
+        <div className="bg-card p-3 rounded-xl border border-border flex items-center justify-between">
           <span className="text-xs font-semibold tracking-wide uppercase text-gray-300">Активні сервери під моніторингом</span>
           <span className="bg-white/5 border border-white/5 text-xs py-0.5 px-2 rounded font-mono text-gray-400">{filteredServers.length} вузлів</span>
         </div>
@@ -439,13 +439,13 @@ export default function MonitoringPage() {
           ) : (
             <AnimatePresence mode="popLayout">
               {filteredServers.map(server => (
-                <motion.div layout key={server.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="glass-panel p-4 border-none flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-white/10 transition-all duration-300 group">
+                <motion.div layout key={server.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-card p-4 border border-border hover:border-primary/50 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 group">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-white/5 border border-white/5 text-gray-400 group-hover:text-primary transition-colors mt-0.5"><Server size={18} /></div>
+                    <div className="p-2 rounded-lg bg-secondary border border-border text-gray-400 group-hover:text-primary transition-colors mt-0.5"><Server size={18} /></div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-semibold text-white">{server.name}</h3>
-                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 bg-white/5 text-gray-400 border border-white/5 rounded">{server.type}</span>
+                        <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 bg-secondary text-gray-400 border border-border rounded">{server.type}</span>
                       </div>
                       <p className="text-xs text-gray-500 font-mono mt-0.5">{server.ip} • Uptime: {server.uptime}</p>
                     </div>
@@ -454,11 +454,11 @@ export default function MonitoringPage() {
                   <div className="flex items-center gap-4 sm:justify-end flex-1">
                     <div className="flex flex-col w-24 sm:w-32 gap-1">
                       <div className="flex justify-between text-[11px] font-mono text-gray-400"><span>CPU</span><span>{server.cpu}%</span></div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden"><div className={`h-full transition-all duration-1000 ${server.cpu > 80 ? 'bg-red-500' : server.cpu > 60 ? 'bg-amber-500' : 'bg-indigo-500'}`} style={{ width: `${server.cpu}%` }} /></div>
+                      <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden"><div className={`h-full transition-all duration-1000 ${server.cpu > 80 ? 'bg-red-500' : server.cpu > 60 ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${server.cpu}%` }} /></div>
                     </div>
                     <div className="flex flex-col w-24 sm:w-32 gap-1">
                       <div className="flex justify-between text-[11px] font-mono text-gray-400"><span>RAM</span><span>{server.ram}%</span></div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden"><div className={`h-full transition-all duration-1000 ${server.ram > 85 ? 'bg-red-500' : server.ram > 65 ? 'bg-amber-500' : 'bg-sky-500'}`} style={{ width: `${server.ram}%` }} /></div>
+                      <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden"><div className={`h-full transition-all duration-1000 ${server.ram > 85 ? 'bg-red-500' : server.ram > 65 ? 'bg-amber-500' : 'bg-primary/80'}`} style={{ width: `${server.ram}%` }} /></div>
                     </div>
                     
                     <div className="flex items-center gap-1.5 text-xs font-medium w-24 justify-end">

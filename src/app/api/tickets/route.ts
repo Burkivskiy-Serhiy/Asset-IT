@@ -7,7 +7,37 @@ const sql = neon(process.env.DATABASE_URL!);
 export async function GET() {
   try {
     const data = await sql`SELECT * FROM tickets ORDER BY "createdAt" DESC`;
-    return NextResponse.json(data);
+    
+    const now = Date.now();
+    let hasUpdates = false;
+
+    for (const ticket of data) {
+      if (!['Вирішено', 'Закрито'].includes(ticket.status)) {
+        let slaHours = 48; // Низький
+        if (ticket.priority === 'Високий' || ticket.priority === 'Критичний') {
+          slaHours = 4;
+        } else if (ticket.priority === 'Середній') {
+          slaHours = 24;
+        }
+
+        const createdAt = new Date(ticket.createdAt).getTime();
+        const deadline = createdAt + (slaHours * 60 * 60 * 1000);
+
+        if (now > deadline && ticket.priority !== 'Критичний') {
+          const newTitle = ticket.title.startsWith('[ПРОСТРОЧЕНО]') ? ticket.title : `[ПРОСТРОЧЕНО] ${ticket.title}`;
+          await sql`
+            UPDATE tickets
+            SET priority = 'Критичний', title = ${newTitle}, "updatedAt" = NOW()
+            WHERE id = ${ticket.id}
+          `;
+          hasUpdates = true;
+        }
+      }
+    }
+
+    const finalData = hasUpdates ? await sql`SELECT * FROM tickets ORDER BY "createdAt" DESC` : data;
+
+    return NextResponse.json(finalData);
   } catch (error) {
     console.error('Tickets GET Error:', error);
     return NextResponse.json({ error: 'Помилка завантаження тікетів' }, { status: 500 });

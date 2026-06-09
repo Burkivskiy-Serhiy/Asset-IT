@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const dbAssets = await prisma.asset.findMany({
@@ -17,7 +19,10 @@ export async function GET() {
       brand: asset.name.split(' ')[0] || 'IT', 
       model: asset.name.split(' ').slice(1).join(' ') || '-',
       serial_number: asset.serialNumber,
-      specs: '',
+      price: asset.price,
+      createdAt: asset.createdAt,
+      location: asset.location,
+      specs: asset.specs || '',
       assignedTo: asset.user === 'Не призначено' ? '' : (asset.user || ''),
     }));
 
@@ -49,7 +54,7 @@ export async function POST(request: Request) {
         serialNumber: serialToStore,
         inventoryId: generatedInventoryId,
         price: 0.0,
-        location: 'Головний офіс',
+        location: body.location || '{"office":"Головний офіс","floor":"","room":""}',
         user: body.assignedTo || 'Не призначено', 
       },
     });
