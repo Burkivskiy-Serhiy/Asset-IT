@@ -103,12 +103,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-gray-500">
-          <p>Тестові акаунти:</p>
-          <p>admin@it.local / admin123</p>
-          <p>tech@it.local / tech123</p>
-          <p>user@it.local / user123</p>
-        </div>
       </div>
     </div>
   );
