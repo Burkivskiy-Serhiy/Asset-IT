@@ -17,18 +17,24 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    const res = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    });
+    try {
+      const res = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
 
-    if (res?.error) {
-      setError('Невірний email або пароль');
+      if (res?.error) {
+        setError('Невірний email або пароль');
+        setLoading(false);
+      } else {
+        router.push('/');
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('Помилка входу:', err);
+      setError('Помилка підключення до сервера авторизації');
       setLoading(false);
-    } else {
-      router.push('/');
-      router.refresh();
     }
   };
 
