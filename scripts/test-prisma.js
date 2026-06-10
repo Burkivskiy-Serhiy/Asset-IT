@@ -1,6 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-
 async function main() {
   try {
     const transfers = await prisma.assetTransfer.findMany();
@@ -11,5 +10,4 @@ async function main() {
     await prisma.$disconnect();
   }
 }
-
 main();

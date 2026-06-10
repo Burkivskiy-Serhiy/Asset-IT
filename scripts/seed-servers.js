@@ -1,6 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-
 async function main() {
   const servers = [
     { name: 'Nginx Load Balancer 1', ip: '192.168.10.1', type: 'api', status: 'online', cpu: '15', ram: '25', uptime: '02:14:00' },
@@ -12,19 +11,14 @@ async function main() {
     { name: 'Next.js Frontend B', ip: '172.16.0.16', type: 'frontend', status: 'online', cpu: '20', ram: '40', uptime: '01:06:00' },
     { name: 'S3 MinIO Storage', ip: '10.1.5.50', type: 'storage', status: 'online', cpu: '12', ram: '90', uptime: '35:00:00' },
   ];
-
   console.log('Clearing existing servers...');
-  // Optional: await prisma.server.deleteMany(); // We won't delete existing ones, just add.
-
   console.log('Adding new servers...');
   for (const s of servers) {
     await prisma.server.create({ data: s });
   }
-  
   const count = await prisma.server.count();
   console.log(`Successfully added servers. Total servers in DB: ${count}`);
 }
-
 main()
   .catch(console.error)
   .finally(async () => {

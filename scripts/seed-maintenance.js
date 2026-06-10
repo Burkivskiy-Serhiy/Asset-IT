@@ -1,17 +1,13 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-
 async function main() {
   console.log('Seeding maintenance tasks...');
-
   const assets = await prisma.asset.findMany();
   if (assets.length === 0) {
     console.log('No assets found. Create some assets first.');
     return;
   }
-
   const getRandomAsset = () => assets[Math.floor(Math.random() * assets.length)].id;
-
   const tasks = [
     {
       assetId: getRandomAsset(),
@@ -26,7 +22,7 @@ async function main() {
       title: 'Гарантійна заміна батареї',
       description: 'Акумулятор тримає менше 30 хвилин. Відправка до офіційного сервісу.',
       scheduledAt: new Date(new Date().setDate(new Date().getDate() - 2)),
-      status: 'Заплановано', // Overdue
+      status: 'Заплановано', 
       type: 'Гарантія',
     },
     {
@@ -63,16 +59,13 @@ async function main() {
       type: 'ТО',
     }
   ];
-
   for (const task of tasks) {
     await prisma.maintenanceTask.create({
       data: task
     });
   }
-
   console.log('Successfully seeded 6 maintenance tasks!');
 }
-
 main()
   .catch(e => {
     console.error(e);

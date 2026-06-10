@@ -1,10 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
-
 async function main() {
   const asset = await prisma.asset.findFirst();
   console.log('First asset:', asset);
-  
   if (asset) {
     const updated = await prisma.asset.update({
       where: { id: asset.id },

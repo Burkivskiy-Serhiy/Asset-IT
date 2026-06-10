@@ -1,11 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-
 const prisma = new PrismaClient();
-
 async function main() {
   console.log('Seeding employees based on existing assets...');
-
-  // Get all unique users from assets
   const assets = await prisma.asset.findMany({
     select: { user: true },
     where: {
@@ -14,24 +10,18 @@ async function main() {
       }
     }
   });
-
   const uniqueUsers = [...new Set(assets.map(a => a.user))];
-
   for (const userName of uniqueUsers) {
     if (!userName) continue;
-
     const parts = userName.trim().split(' ');
     const firstName = parts[0];
     const lastName = parts.slice(1).join(' ');
-
-    // Check if employee already exists
     const existing = await prisma.employee.findFirst({
       where: {
         firstName,
         lastName
       }
     });
-
     if (!existing) {
       await prisma.employee.create({
         data: {
@@ -46,10 +36,8 @@ async function main() {
       console.log(`Created employee: ${firstName} ${lastName}`);
     }
   }
-
   console.log('Employee seeding complete!');
 }
-
 main()
   .catch((e) => {
     console.error(e);
