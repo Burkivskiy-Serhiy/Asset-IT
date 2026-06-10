@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -9,11 +8,9 @@ import {
   DollarSign, Ticket, Percent
 } from 'lucide-react';
 import Link from 'next/link';
-
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -22,7 +19,6 @@ export default function DashboardPage() {
           const data = await res.json();
           setStats(data);
         } else {
-          // Mock data fallback for preview
           setStats(mockData);
         }
       } catch (error) {
@@ -32,10 +28,8 @@ export default function DashboardPage() {
         setLoading(false);
       }
     };
-
     fetchStats();
   }, []);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh] text-gray-500 text-sm">
@@ -44,19 +38,13 @@ export default function DashboardPage() {
       </div>
     );
   }
-
   const activePercent = stats?.total ? Math.round(((stats?.byStatus?.active || 0) / stats.total) * 100) : 0;
-  
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500">
-      
-      {/* KPI DASHBOARD SECTION */}
       <div>
         <h1 className="text-2xl font-bold text-white mb-4">Дашборд KPI</h1>
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Зведені метрики</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          
-          {/* Total Value */}
           <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
               <DollarSign size={24} className="text-emerald-500" />
@@ -71,8 +59,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-
-          {/* License Usage */}
           <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
               <Percent size={24} className="text-blue-500" />
@@ -90,8 +76,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-
-          {/* Open Tickets */}
           <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
               <Ticket size={24} className="text-yellow-500" />
@@ -104,13 +88,9 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          
         </div>
       </div>
-      
-      {/* KPI CARDS (4 Columns) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1 */}
         <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2 text-gray-400">
@@ -130,8 +110,6 @@ export default function DashboardPage() {
             <span className="text-gray-500">vs минулий місяць</span>
           </div>
         </div>
-
-        {/* Card 2 (With Circular Progress) */}
         <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between relative overflow-hidden">
           <div className="flex justify-between items-start mb-4 z-10">
             <div className="flex items-center gap-2 text-gray-400">
@@ -152,8 +130,6 @@ export default function DashboardPage() {
                 <span className="text-yellow-500 font-medium">{stats?.byStatus?.maintenance || 0} В ремонті</span>
               </div>
             </div>
-            
-            {/* Circular Progress */}
             <div className="relative w-16 h-16 flex items-center justify-center">
               <svg className="w-16 h-16 transform -rotate-90">
                 <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-border" />
@@ -169,8 +145,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-
-        {/* Card 3 */}
         <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2 text-gray-400">
@@ -190,8 +164,6 @@ export default function DashboardPage() {
             <span className="text-gray-500">vs минулий місяць</span>
           </div>
         </div>
-
-        {/* Card 4 */}
         <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2 text-gray-400">
@@ -212,16 +184,11 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* MIDDLE SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Bar Chart (Takes 2 columns) */}
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-base font-semibold text-white">Статистика за категоріями</h2>
           </div>
-          
-          {/* Chart Header Stats */}
           <div className="flex gap-12 mb-8">
             <div>
               <p className="text-3xl font-bold text-primary">97%</p>
@@ -242,8 +209,6 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-
-          {/* Real Category Bars */}
           <div className="mt-6 space-y-5 h-48 overflow-y-auto custom-scrollbar pr-2">
             {Object.entries(stats?.byCategory || {}).length > 0 ? (
               Object.entries(stats?.byCategory || {})
@@ -269,8 +234,6 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-
-        {/* Right Panel: Recent Changes List */}
         <div className="bg-card border border-border rounded-xl p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-base font-semibold text-white">Останні зміни</h2>
@@ -278,7 +241,6 @@ export default function DashboardPage() {
               Всі зміни &rarr;
             </Link>
           </div>
-          
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
             {stats?.recentAssets?.slice(0, 5).map((asset: any, i: number) => (
               <div key={i} className="flex items-center gap-3">
@@ -309,10 +271,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* BOTTOM SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Pending Approvals (Tickets) */}
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-base font-semibold text-white">Нові заявки (Служба підтримки)</h2>
@@ -320,7 +279,6 @@ export default function DashboardPage() {
               Всі заявки &rarr;
             </Link>
           </div>
-          
           <div className="space-y-4">
             {stats?.recentTickets?.length > 0 ? stats.recentTickets.map((ticket: any, i: number) => (
               <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3 border-b border-border/50 last:border-0">
@@ -347,8 +305,6 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-
-        {/* System Alerts */}
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-base font-semibold text-white">Сповіщення системи / Дедлайни</h2>
@@ -356,7 +312,6 @@ export default function DashboardPage() {
               Всі сповіщення &rarr;
             </button>
           </div>
-          
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="text-xs text-gray-500 uppercase bg-secondary/30">
@@ -391,12 +346,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      
     </div>
   );
 }
-
-// Helpers
 function getCategoryIcon(category: string) {
   switch (category) {
     case 'Ноутбук': return <Laptop size={16} className="text-gray-400" />;
@@ -407,7 +359,6 @@ function getCategoryIcon(category: string) {
     default: return <Database size={16} className="text-gray-400" />;
   }
 }
-
 const mockData = {
   total: 200,
   totalValue: 1245000,

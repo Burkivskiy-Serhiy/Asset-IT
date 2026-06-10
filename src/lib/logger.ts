@@ -1,12 +1,4 @@
 import { prisma } from './prisma';
-
-/**
- * Global Audit Logger
- * @param actor Хто виконав дію (напр. 'Адміністратор', 'Технік', 'Система')
- * @param type Рівень логу (напр. 'info', 'warning', 'error', 'success')
- * @param source Де відбулася дія (напр. 'Активи', 'Налаштування', 'Користувачі')
- * @param text Опис дії
- */
 export async function logAction(
   actor: string,
   type: string,

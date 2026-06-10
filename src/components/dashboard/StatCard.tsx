@@ -1,11 +1,9 @@
 'use client';
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, LucideIcon } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
 interface StatCardProps {
   label: string;
   value: string | number;
@@ -14,7 +12,6 @@ interface StatCardProps {
   icon: LucideIcon;
   color?: string;
 }
-
 export default function StatCard({ label, value, change, trend, icon: Icon, color = 'var(--primary)' }: StatCardProps) {
   return (
     <motion.div 
@@ -41,7 +38,6 @@ export default function StatCard({ label, value, change, trend, icon: Icon, colo
               </div>
             )}
           </div>
-          
           <div>
             <h3 className="text-3xl font-extrabold mb-1 tracking-tight">{value}</h3>
             <p className="text-sm font-medium text-muted-foreground">{label}</p>

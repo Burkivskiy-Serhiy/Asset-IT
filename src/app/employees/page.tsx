@@ -1,551 +1,1 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, Search, Plus, Mail, Briefcase,
-  Trash2, Pencil, Eye, Laptop, Monitor, 
-  Mouse, Smartphone, Tag, UserCheck, UserMinus, UserX, Zap, X
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { createPortal } from 'react-dom';
-
-interface AssignedAsset {
-  id: string;
-  name: string;
-  category: string;
-  brand?: string;
-  model?: string;
-  serial_number?: string;
-}
-
-interface Employee {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  position: string;
-  department: string;
-  status: string;
-  assets: AssignedAsset[];
-}
-
-const INITIAL_FORM_DATA = {
-  firstName: '', 
-  lastName: '', 
-  email: '', 
-  position: '', 
-  department: '', 
-  status: 'Активний'
-};
-
-export default function EmployeesPage() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all'); // all, active, vacation, dismissed
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
-
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  const fetchEmployees = async () => {
-    try {
-      const res = await fetch('/api/employees');
-      if (res.ok) {
-        const data = await res.json();
-        
-        const formattedEmployees = data.map((emp: any) => {
-          const [firstName, ...lastNameParts] = (emp.name || '').split(' ');
-          return {
-            id: emp.id.toString(),
-            firstName: firstName || '',
-            lastName: lastNameParts.join(' ') || '',
-            email: emp.email,
-            position: emp.role,
-            department: emp.dept,
-            status: emp.status === 'active' ? 'Активний' : emp.status,
-            assets: emp.assetsList || [] 
-          };
-        });
-        
-        setEmployees(formattedEmployees);
-      }
-    } catch (error) {
-      console.error('Помилка завантаження співробітників:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          emp.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          emp.department.toLowerCase().includes(searchTerm.toLowerCase());
-    if (!matchesSearch) return false;
-
-    if (filterType === 'all') return true;
-    if (filterType === 'active') return emp.status === 'Активний';
-    if (filterType === 'vacation') return emp.status === 'Вiдпустка';
-    if (filterType === 'dismissed') return emp.status === 'Звільнений';
-    
-    return true;
-  });
-
-  const totalCount = employees.length;
-  const activeCount = employees.filter(e => e.status === 'Активний').length;
-  const vacationCount = employees.filter(e => e.status === 'Вiдпустка').length;
-  const dismissedCount = employees.filter(e => e.status === 'Звільнений').length;
-
-  const handleOpenAdd = () => {
-    setFormData(INITIAL_FORM_DATA); 
-    setIsEditMode(false); 
-    setEditingId(null); 
-    setIsFormModalOpen(true);
-  };
-
-  const handleOpenEdit = (emp: Employee) => {
-    setFormData({ 
-      firstName: emp.firstName, 
-      lastName: emp.lastName, 
-      email: emp.email, 
-      position: emp.position, 
-      department: emp.department, 
-      status: emp.status 
-    });
-    setIsEditMode(true); 
-    setEditingId(emp.id); 
-    setIsFormModalOpen(true);
-  };
-
-  const handleOpenProfile = (emp: Employee) => {
-    setSelectedEmployee(emp);
-    setIsProfileOpen(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const now = new Date();
-    const timeStr = now.toTimeString().split(' ')[0];
-    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-    
-    if (isEditMode && editingId) {
-      const dbPayload = {
-        id: editingId,
-        name: fullName,
-        role: formData.position,
-        dept: formData.department,
-        email: formData.email,
-        status: formData.status
-      };
-
-      try {
-        const res = await fetch('/api/employees', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dbPayload)
-        });
-
-        if (res.ok) {
-          await fetch('/api/logs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: `log-${Date.now()}`,
-              time: timeStr,
-              type: 'warning',
-              source: 'EMPLOYEES',
-              text: `Оновлено дані співробітника: "${fullName}" [Посада: ${formData.position}]`
-            }),
-          });
-
-          await fetchEmployees();
-          setIsFormModalOpen(false);
-        } else {
-          const errData = await res.json();
-          alert(`Помилка: ${errData.error || 'Не вдалося оновити запис у БД'}`);
-        }
-      } catch (error) {
-        console.error('Помилка при відправці форми:', error);
-      }
-    } else {
-      const dbPayload = {
-        name: fullName,
-        role: formData.position,
-        dept: formData.department,
-        email: formData.email,
-        status: formData.status === 'Активний' ? 'active' : formData.status,
-        dateJoined: new Date().toISOString().split('T')[0] 
-      };
-
-      try {
-        const res = await fetch('/api/employees', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dbPayload)
-        });
-
-        if (res.ok) {
-          await fetch('/api/logs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: `log-${Date.now()}`,
-              time: timeStr,
-              type: 'info',
-              source: 'EMPLOYEES',
-              text: `Додано нового співробітника: "${fullName}" [Відділ: ${formData.department}]`
-            }),
-          });
-
-          await fetchEmployees();
-          setIsFormModalOpen(false);
-        } else {
-          const errData = await res.json();
-          alert(`Помилка: ${errData.error || 'Не вдалося зберегти в БД'}`);
-        }
-      } catch (error) {
-        console.error('Помилка при відправці форми:', error);
-      }
-    }
-  };
-
-  const handleDeleteEmployee = async (id: string) => {
-    if (confirm('Ви впевнені, що хочете видалити цього співробітника? Автоматично закріплені активи повернуться на склад.')) {
-      
-      const empToDelete = employees.find(e => e.id === id);
-
-      try {
-        const res = await fetch(`/api/employees?id=${id}`, {
-          method: 'DELETE'
-        });
-
-        if (res.ok) {
-          if (empToDelete) {
-            const now = new Date();
-            const timeStr = now.toTimeString().split(' ')[0];
-            
-            await fetch('/api/logs', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                id: `log-${Date.now()}`,
-                time: timeStr,
-                type: 'error',
-                source: 'EMPLOYEES',
-                text: `Видалено профіль співробітника: "${empToDelete.firstName} ${empToDelete.lastName}"`
-              }),
-            });
-          }
-
-          setEmployees(employees.filter(emp => emp.id !== id));
-        } else {
-          alert('Не вдалося видалити співробітника з бази даних.');
-        }
-      } catch (error) {
-        console.error('Помилка при видаленні:', error);
-      }
-    }
-  };
-
-  const getAssetIcon = (category: string) => {
-    const cat = category.toLowerCase();
-    if (cat.includes('laptop') || cat.includes('ноутбук') || cat.includes('комп')) return <Laptop size={16} className="text-blue-400" />;
-    if (cat.includes('monitor') || cat.includes('монітор')) return <Monitor size={16} className="text-indigo-400" />;
-    if (cat.includes('phone') || cat.includes('телефон') || cat.includes('смартфон')) return <Smartphone size={16} className="text-emerald-400" />;
-    if (cat.includes('mouse') || cat.includes('keyboard') || cat.includes('перифер')) return <Mouse size={16} className="text-amber-400" />;
-    return <Tag size={16} className="text-gray-400" />;
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'Активний': return <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold rounded-md flex items-center gap-1 w-max"><UserCheck size={14}/> Активний</span>;
-      case 'Вiдпустка': return <span className="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold rounded-md flex items-center gap-1 w-max"><UserMinus size={14}/> У відпустці</span>;
-      case 'Звільнений': return <span className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-bold rounded-md flex items-center gap-1 w-max"><UserX size={14}/> Звільнений</span>;
-      default: return <span className="px-2.5 py-1 bg-gray-500/10 text-gray-400 border border-gray-500/20 text-xs font-bold rounded-md flex items-center gap-1 w-max">{status}</span>;
-    }
-  };
-
-  if (isLoading) return <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center min-h-[50vh]"><Zap className="animate-pulse mb-4 text-primary" size={32}/>Завантаження даних...</div>;
-
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 max-w-[1600px] mx-auto space-y-8 text-white relative">
-      
-      {/* Шапка */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1 flex items-center gap-3">
-            <Users size={32} className="text-blue-400" /> Співробітники
-          </h1>
-          <p className="text-muted-foreground font-light text-sm">Управління персоналом та закріпленими за ними активами.</p>
-        </div>
-        <button 
-          onClick={handleOpenAdd}
-          className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all shadow-lg shadow-primary/20 self-start sm:self-center"
-        >
-          <Plus size={18} /> Додати співробітника
-        </button>
-      </div>
-
-      {/* ПРЕМІУМ ВІДЖЕТИ */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 group-hover:scale-110 transition-all duration-300"><Users size={28} /></div>
-          <div><p className="text-sm font-medium text-gray-400">Всього в базі</p><h3 className="text-3xl font-black text-white tracking-tight">{totalCount}</h3></div>
-        </motion.div>
-        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300"><UserCheck size={28} /></div>
-          <div><p className="text-sm font-medium text-gray-400">Активні</p><h3 className="text-3xl font-black text-white tracking-tight">{activeCount}</h3></div>
-        </motion.div>
-        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20 group-hover:scale-110 transition-all duration-300"><UserMinus size={28} /></div>
-          <div><p className="text-sm font-medium text-gray-400">У відпустці</p><h3 className="text-3xl font-black text-white tracking-tight">{vacationCount}</h3></div>
-        </motion.div>
-        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-red-500/10 text-red-500 group-hover:bg-red-500/20 group-hover:scale-110 transition-all duration-300"><UserX size={28} /></div>
-          <div><p className="text-sm font-medium text-gray-400">Звільнені</p><h3 className="text-3xl font-black text-white tracking-tight">{dismissedCount}</h3></div>
-        </motion.div>
-      </div>
-
-      {/* ТАБЛИЦЯ ТА ФІЛЬТРИ */}
-      <div className="bg-card/60 backdrop-blur-md border border-border rounded-2xl overflow-hidden flex flex-col shadow-2xl">
-        
-        {/* Фільтри та пошук */}
-        <div className="p-5 border-b border-border flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-muted/5">
-          <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 custom-scrollbar">
-            {['all', 'active', 'vacation', 'dismissed'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
-                  filterType === type 
-                    ? "bg-primary/20 text-primary border border-primary/30" 
-                    : "bg-secondary text-muted-foreground hover:bg-secondary/80 border border-transparent"
-                )}
-              >
-                {type === 'all' ? 'Усі співробітники' : 
-                 type === 'active' ? 'Активні' : 
-                 type === 'vacation' ? 'У відпустці' : 'Звільнені'}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full lg:max-w-xs shrink-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <input 
-              type="text" 
-              placeholder="Пошук за ім'ям, посадою..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-background/50 border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 focus:bg-background transition-colors"
-            />
-          </div>
-        </div>
-
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-muted/20 text-gray-400 font-semibold border-b border-border/50">
-              <tr>
-                <th className="px-6 py-4">Співробітник</th>
-                <th className="px-6 py-4">Посада / Відділ</th>
-                <th className="px-6 py-4">Активи</th>
-                <th className="px-6 py-4">Статус</th>
-                <th className="px-6 py-4 text-right">Дії</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              <AnimatePresence>
-                {filteredEmployees.map((emp) => (
-                  <motion.tr 
-                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    key={emp.id} 
-                    className="hover:bg-muted/10 transition-colors group cursor-pointer"
-                    onDoubleClick={() => handleOpenProfile(emp)}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-background/80 border border-border flex items-center justify-center font-bold text-primary group-hover:scale-110 transition-transform">
-                          {emp.firstName.charAt(0)}{emp.lastName.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-white text-base">{emp.firstName} {emp.lastName}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail size={12}/> {emp.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-300 flex items-center gap-1.5"><Briefcase size={14} className="text-primary/70"/> {emp.position}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{emp.department}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-black/20 text-gray-300 border border-white/5 shadow-inner">
-                        <Laptop size={14} className={emp.assets.length > 0 ? "text-blue-400" : "text-gray-500"} /> 
-                        {emp.assets.length} од.
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">{getStatusBadge(emp.status)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                        <button onClick={(e) => { e.stopPropagation(); handleOpenProfile(emp); }} className="p-2 text-gray-400 hover:text-emerald-400 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Профіль">
-                          <Eye size={16} />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleOpenEdit(emp); }} className="p-2 text-gray-400 hover:text-blue-400 rounded-lg hover:bg-blue-500/10 transition-colors" title="Редагувати">
-                          <Pencil size={16} />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDeleteEmployee(emp.id); }} className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors" title="Видалити">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-              {filteredEmployees.length === 0 && (
-                <tr><td colSpan={5} className="p-12 text-center text-muted-foreground">За вашими критеріями не знайдено жодного співробітника.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* МОДАЛКА: Створення / Редагування */}
-      {typeof document !== 'undefined' && createPortal(
-        <AnimatePresence>
-          {isFormModalOpen && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-              <motion.div 
-                initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-                animate={{ scale: 1, opacity: 1, y: 0 }} 
-                exit={{ scale: 0.95, opacity: 0, y: 20 }} 
-                className="bg-card border border-border w-full max-w-lg rounded-2xl p-6 md:p-8 relative shadow-2xl m-auto text-foreground"
-              >
-                <button onClick={() => setIsFormModalOpen(false)} className="absolute right-5 top-5 text-muted-foreground hover:text-foreground bg-secondary/50 p-1.5 rounded-lg transition-colors"><X size={20}/></button>
-                <h2 className="text-2xl font-bold mb-6 text-white">{isEditMode ? 'Редагувати дані' : 'Новий співробітник'}</h2>
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ім'я</label>
-                      <input required type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Прізвище</label>
-                      <input required type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email</label>
-                      <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Посада</label>
-                      <input required type="text" value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Відділ</label>
-                      <input required type="text" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Статус</label>
-                      <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white">
-                        <option value="Активний">Активний</option>
-                        <option value="Вiдпустка">Вiдпустка</option>
-                        <option value="Звільнений">Звільнений</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex justify-end gap-3">
-                    <button type="button" onClick={() => setIsFormModalOpen(false)} className="px-5 py-3 rounded-xl font-semibold hover:bg-secondary transition-all text-gray-300">Скасувати</button>
-                    <button type="submit" className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_15px_rgba(var(--primary),0.3)]">
-                      {isEditMode ? 'Зберегти зміни' : 'Додати співробітника'}
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
-
-      {/* МОДАЛКА: Профіль співробітника та Активи */}
-      {typeof document !== 'undefined' && createPortal(
-        <AnimatePresence>
-          {isProfileOpen && selectedEmployee && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-              <motion.div 
-                initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-                animate={{ scale: 1, opacity: 1, y: 0 }} 
-                exit={{ scale: 0.95, opacity: 0, y: 20 }} 
-                className="bg-card border border-border w-full max-w-xl rounded-3xl overflow-hidden relative shadow-2xl m-auto text-foreground"
-              >
-                <button onClick={() => setIsProfileOpen(false)} className="absolute right-5 top-5 text-white/70 hover:text-white bg-black/20 p-2 rounded-xl transition-colors z-10 backdrop-blur-md"><X size={20}/></button>
-                
-                <div className="bg-gradient-to-br from-primary/30 via-primary/10 to-card p-8 border-b border-border/50 flex items-center gap-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                  
-                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-4xl font-black text-white shadow-xl shadow-primary/20 shrink-0">
-                    {selectedEmployee.firstName.charAt(0)}{selectedEmployee.lastName.charAt(0)}
-                  </div>
-                  <div className="relative z-10">
-                    <h2 className="text-3xl font-extrabold text-white mb-2">{selectedEmployee.firstName} {selectedEmployee.lastName}</h2>
-                    <div className="flex flex-col gap-1.5">
-                      <p className="text-blue-300 font-medium flex items-center gap-2"><Briefcase size={16}/> {selectedEmployee.position} • {selectedEmployee.department}</p>
-                      <p className="text-gray-400 text-sm flex items-center gap-2"><Mail size={16}/> {selectedEmployee.email}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-8 pt-6 flex flex-col gap-6 bg-card">
-                  <div>
-                    <div className="flex justify-between items-end mb-4">
-                      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                        <Tag size={16}/> Закріплена техніка ({selectedEmployee.assets.length})
-                      </h3>
-                    </div>
-                    
-                    {selectedEmployee.assets.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
-                        {selectedEmployee.assets.map(asset => (
-                          <div key={asset.id} className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-secondary/30 hover:bg-secondary/50 transition-colors group">
-                            <div className="flex items-center gap-4">
-                              <div className="p-3 rounded-lg bg-black/30 border border-white/5 group-hover:scale-110 transition-transform">
-                                {getAssetIcon(asset.category)}
-                              </div>
-                              <div>
-                                <div className="text-sm font-bold text-white">{asset.name}</div>
-                                <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                                  {asset.brand && <span>{asset.brand} {asset.model}</span>}
-                                  {asset.serial_number && <span className="font-mono text-gray-500 bg-black/40 px-1.5 py-0.5 rounded">С/Н: {asset.serial_number}</span>}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-10 border border-dashed border-white/10 rounded-2xl bg-secondary/10">
-                        <Laptop className="mx-auto text-gray-600 mb-3 opacity-50" size={32} />
-                        <p className="text-base font-medium text-gray-400">Техніки ще немає</p>
-                        <p className="text-sm text-gray-500 mt-1">За співробітником не закріплено жодного активу.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
-    </motion.div>
-  );
-}
+'use client';import React, { useState, useEffect } from 'react';import {   Users, Search, Plus, Mail, Briefcase,  Trash2, Pencil, Eye, Laptop, Monitor,   Mouse, Smartphone, Tag, UserCheck, UserMinus, UserX, Zap, X} from 'lucide-react';import { motion, AnimatePresence } from 'framer-motion';import { cn } from '@/lib/utils';import { createPortal } from 'react-dom';interface AssignedAsset {  id: string;  name: string;  category: string;  brand?: string;  model?: string;  serial_number?: string;}interface Employee {  id: string;  firstName: string;  lastName: string;  email: string;  position: string;  department: string;  status: string;  assets: AssignedAsset[];}const INITIAL_FORM_DATA = {  firstName: '',   lastName: '',   email: '',   position: '',   department: '',   status: 'Активний'};export default function EmployeesPage() {  const [employees, setEmployees] = useState<Employee[]>([]);  const [searchTerm, setSearchTerm] = useState('');  const [filterType, setFilterType] = useState('all');   const [isLoading, setIsLoading] = useState(true);  const [isFormModalOpen, setIsFormModalOpen] = useState(false);  const [isEditMode, setIsEditMode] = useState(false);  const [editingId, setEditingId] = useState<string | null>(null);  const [formData, setFormData] = useState(INITIAL_FORM_DATA);  const [isProfileOpen, setIsProfileOpen] = useState(false);  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);  useEffect(() => {    fetchEmployees();  }, []);  const fetchEmployees = async () => {    try {      const res = await fetch('/api/employees');      if (res.ok) {        const data = await res.json();        const formattedEmployees = data.map((emp: any) => {          const [firstName, ...lastNameParts] = (emp.name || '').split(' ');          return {            id: emp.id.toString(),            firstName: firstName || '',            lastName: lastNameParts.join(' ') || '',            email: emp.email,            position: emp.role,            department: emp.dept,            status: emp.status === 'active' ? 'Активний' : emp.status,            assets: emp.assetsList || []           };        });        setEmployees(formattedEmployees);      }    } catch (error) {      console.error('Помилка завантаження співробітників:', error);    } finally {      setIsLoading(false);    }  };  const filteredEmployees = employees.filter(emp => {    const matchesSearch = `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||                          emp.position.toLowerCase().includes(searchTerm.toLowerCase()) ||                          emp.department.toLowerCase().includes(searchTerm.toLowerCase());    if (!matchesSearch) return false;    if (filterType === 'all') return true;    if (filterType === 'active') return emp.status === 'Активний';    if (filterType === 'vacation') return emp.status === 'Вiдпустка';    if (filterType === 'dismissed') return emp.status === 'Звільнений';    return true;  });  const totalCount = employees.length;  const activeCount = employees.filter(e => e.status === 'Активний').length;  const vacationCount = employees.filter(e => e.status === 'Вiдпустка').length;  const dismissedCount = employees.filter(e => e.status === 'Звільнений').length;  const handleOpenAdd = () => {    setFormData(INITIAL_FORM_DATA);     setIsEditMode(false);     setEditingId(null);     setIsFormModalOpen(true);  };  const handleOpenEdit = (emp: Employee) => {    setFormData({       firstName: emp.firstName,       lastName: emp.lastName,       email: emp.email,       position: emp.position,       department: emp.department,       status: emp.status     });    setIsEditMode(true);     setEditingId(emp.id);     setIsFormModalOpen(true);  };  const handleOpenProfile = (emp: Employee) => {    setSelectedEmployee(emp);    setIsProfileOpen(true);  };  const handleSubmit = async (e: React.FormEvent) => {    e.preventDefault();    const now = new Date();    const timeStr = now.toTimeString().split(' ')[0];    const fullName = `${formData.firstName} ${formData.lastName}`.trim();    if (isEditMode && editingId) {      const dbPayload = {        id: editingId,        name: fullName,        role: formData.position,        dept: formData.department,        email: formData.email,        status: formData.status      };      try {        const res = await fetch('/api/employees', {          method: 'PUT',          headers: { 'Content-Type': 'application/json' },          body: JSON.stringify(dbPayload)        });        if (res.ok) {          await fetch('/api/logs', {            method: 'POST',            headers: { 'Content-Type': 'application/json' },            body: JSON.stringify({              id: `log-${Date.now()}`,              time: timeStr,              type: 'warning',              source: 'EMPLOYEES',              text: `Оновлено дані співробітника: "${fullName}" [Посада: ${formData.position}]`            }),          });          await fetchEmployees();          setIsFormModalOpen(false);        } else {          const errData = await res.json();          alert(`Помилка: ${errData.error || 'Не вдалося оновити запис у БД'}`);        }      } catch (error) {        console.error('Помилка при відправці форми:', error);      }    } else {      const dbPayload = {        name: fullName,        role: formData.position,        dept: formData.department,        email: formData.email,        status: formData.status === 'Активний' ? 'active' : formData.status,        dateJoined: new Date().toISOString().split('T')[0]       };      try {        const res = await fetch('/api/employees', {          method: 'POST',          headers: { 'Content-Type': 'application/json' },          body: JSON.stringify(dbPayload)        });        if (res.ok) {          await fetch('/api/logs', {            method: 'POST',            headers: { 'Content-Type': 'application/json' },            body: JSON.stringify({              id: `log-${Date.now()}`,              time: timeStr,              type: 'info',              source: 'EMPLOYEES',              text: `Додано нового співробітника: "${fullName}" [Відділ: ${formData.department}]`            }),          });          await fetchEmployees();          setIsFormModalOpen(false);        } else {          const errData = await res.json();          alert(`Помилка: ${errData.error || 'Не вдалося зберегти в БД'}`);        }      } catch (error) {        console.error('Помилка при відправці форми:', error);      }    }  };  const handleDeleteEmployee = async (id: string) => {    if (confirm('Ви впевнені, що хочете видалити цього співробітника? Автоматично закріплені активи повернуться на склад.')) {      const empToDelete = employees.find(e => e.id === id);      try {        const res = await fetch(`/api/employees?id=${id}`, {          method: 'DELETE'        });        if (res.ok) {          if (empToDelete) {            const now = new Date();            const timeStr = now.toTimeString().split(' ')[0];            await fetch('/api/logs', {              method: 'POST',              headers: { 'Content-Type': 'application/json' },              body: JSON.stringify({                id: `log-${Date.now()}`,                time: timeStr,                type: 'error',                source: 'EMPLOYEES',                text: `Видалено профіль співробітника: "${empToDelete.firstName} ${empToDelete.lastName}"`              }),            });          }          setEmployees(employees.filter(emp => emp.id !== id));        } else {          alert('Не вдалося видалити співробітника з бази даних.');        }      } catch (error) {        console.error('Помилка при видаленні:', error);      }    }  };  const getAssetIcon = (category: string) => {    const cat = category.toLowerCase();    if (cat.includes('laptop') || cat.includes('ноутбук') || cat.includes('комп')) return <Laptop size={16} className="text-blue-400" />;    if (cat.includes('monitor') || cat.includes('монітор')) return <Monitor size={16} className="text-indigo-400" />;    if (cat.includes('phone') || cat.includes('телефон') || cat.includes('смартфон')) return <Smartphone size={16} className="text-emerald-400" />;    if (cat.includes('mouse') || cat.includes('keyboard') || cat.includes('перифер')) return <Mouse size={16} className="text-amber-400" />;    return <Tag size={16} className="text-gray-400" />;  };  const getStatusBadge = (status: string) => {    switch (status) {      case 'Активний': return <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold rounded-md flex items-center gap-1 w-max"><UserCheck size={14}/> Активний</span>;      case 'Вiдпустка': return <span className="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold rounded-md flex items-center gap-1 w-max"><UserMinus size={14}/> У відпустці</span>;      case 'Звільнений': return <span className="px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-bold rounded-md flex items-center gap-1 w-max"><UserX size={14}/> Звільнений</span>;      default: return <span className="px-2.5 py-1 bg-gray-500/10 text-gray-400 border border-gray-500/20 text-xs font-bold rounded-md flex items-center gap-1 w-max">{status}</span>;    }  };  if (isLoading) return <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center min-h-[50vh]"><Zap className="animate-pulse mb-4 text-primary" size={32}/>Завантаження даних...</div>;  return (    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 max-w-[1600px] mx-auto space-y-8 text-white relative">      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">        <div>          <h1 className="text-4xl font-extrabold tracking-tight text-gradient mb-1 flex items-center gap-3">            <Users size={32} className="text-blue-400" /> Співробітники          </h1>          <p className="text-muted-foreground font-light text-sm">Управління персоналом та закріпленими за ними активами.</p>        </div>        <button           onClick={handleOpenAdd}          className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all shadow-lg shadow-primary/20 self-start sm:self-center"        >          <Plus size={18} /> Додати співробітника        </button>      </div>      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 group-hover:scale-110 transition-all duration-300"><Users size={28} /></div>          <div><p className="text-sm font-medium text-gray-400">Всього в базі</p><h3 className="text-3xl font-black text-white tracking-tight">{totalCount}</h3></div>        </motion.div>        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300"><UserCheck size={28} /></div>          <div><p className="text-sm font-medium text-gray-400">Активні</p><h3 className="text-3xl font-black text-white tracking-tight">{activeCount}</h3></div>        </motion.div>        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20 group-hover:scale-110 transition-all duration-300"><UserMinus size={28} /></div>          <div><p className="text-sm font-medium text-gray-400">У відпустці</p><h3 className="text-3xl font-black text-white tracking-tight">{vacationCount}</h3></div>        </motion.div>        <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border/50 shadow-lg backdrop-blur-xl group">          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-red-500/10 text-red-500 group-hover:bg-red-500/20 group-hover:scale-110 transition-all duration-300"><UserX size={28} /></div>          <div><p className="text-sm font-medium text-gray-400">Звільнені</p><h3 className="text-3xl font-black text-white tracking-tight">{dismissedCount}</h3></div>        </motion.div>      </div>      <div className="bg-card/60 backdrop-blur-md border border-border rounded-2xl overflow-hidden flex flex-col shadow-2xl">        <div className="p-5 border-b border-border flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-muted/5">          <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 custom-scrollbar">            {['all', 'active', 'vacation', 'dismissed'].map((type) => (              <button                key={type}                onClick={() => setFilterType(type)}                className={cn(                  "px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",                  filterType === type                     ? "bg-primary/20 text-primary border border-primary/30"                     : "bg-secondary text-muted-foreground hover:bg-secondary/80 border border-transparent"                )}              >                {type === 'all' ? 'Усі співробітники' :                  type === 'active' ? 'Активні' :                  type === 'vacation' ? 'У відпустці' : 'Звільнені'}              </button>            ))}          </div>          <div className="relative w-full lg:max-w-xs shrink-0">            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />            <input               type="text"               placeholder="Пошук за ім'ям, посадою..."               value={searchTerm}              onChange={(e) => setSearchTerm(e.target.value)}              className="w-full bg-background/50 border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 focus:bg-background transition-colors"            />          </div>        </div>        <div className="overflow-x-auto custom-scrollbar">          <table className="w-full text-left text-sm whitespace-nowrap">            <thead className="bg-muted/20 text-gray-400 font-semibold border-b border-border/50">              <tr>                <th className="px-6 py-4">Співробітник</th>                <th className="px-6 py-4">Посада / Відділ</th>                <th className="px-6 py-4">Активи</th>                <th className="px-6 py-4">Статус</th>                <th className="px-6 py-4 text-right">Дії</th>              </tr>            </thead>            <tbody className="divide-y divide-border/50">              <AnimatePresence>                {filteredEmployees.map((emp) => (                  <motion.tr                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}                    key={emp.id}                     className="hover:bg-muted/10 transition-colors group cursor-pointer"                    onDoubleClick={() => handleOpenProfile(emp)}                  >                    <td className="px-6 py-4">                      <div className="flex items-center gap-3">                        <div className="w-10 h-10 rounded-full bg-background/80 border border-border flex items-center justify-center font-bold text-primary group-hover:scale-110 transition-transform">                          {emp.firstName.charAt(0)}{emp.lastName.charAt(0)}                        </div>                        <div>                          <p className="font-bold text-white text-base">{emp.firstName} {emp.lastName}</p>                          <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail size={12}/> {emp.email}</p>                        </div>                      </div>                    </td>                    <td className="px-6 py-4">                      <p className="font-medium text-gray-300 flex items-center gap-1.5"><Briefcase size={14} className="text-primary/70"/> {emp.position}</p>                      <p className="text-xs text-gray-500 mt-0.5">{emp.department}</p>                    </td>                    <td className="px-6 py-4">                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-black/20 text-gray-300 border border-white/5 shadow-inner">                        <Laptop size={14} className={emp.assets.length > 0 ? "text-blue-400" : "text-gray-500"} />                         {emp.assets.length} од.                      </span>                    </td>                    <td className="px-6 py-4">{getStatusBadge(emp.status)}</td>                    <td className="px-6 py-4 text-right">                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">                        <button onClick={(e) => { e.stopPropagation(); handleOpenProfile(emp); }} className="p-2 text-gray-400 hover:text-emerald-400 rounded-lg hover:bg-emerald-500/10 transition-colors" title="Профіль">                          <Eye size={16} />                        </button>                        <button onClick={(e) => { e.stopPropagation(); handleOpenEdit(emp); }} className="p-2 text-gray-400 hover:text-blue-400 rounded-lg hover:bg-blue-500/10 transition-colors" title="Редагувати">                          <Pencil size={16} />                        </button>                        <button onClick={(e) => { e.stopPropagation(); handleDeleteEmployee(emp.id); }} className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors" title="Видалити">                          <Trash2 size={16} />                        </button>                      </div>                    </td>                  </motion.tr>                ))}              </AnimatePresence>              {filteredEmployees.length === 0 && (                <tr><td colSpan={5} className="p-12 text-center text-muted-foreground">За вашими критеріями не знайдено жодного співробітника.</td></tr>              )}            </tbody>          </table>        </div>      </div>      {typeof document !== 'undefined' && createPortal(        <AnimatePresence>          {isFormModalOpen && (            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">              <motion.div                 initial={{ scale: 0.95, opacity: 0, y: 20 }}                 animate={{ scale: 1, opacity: 1, y: 0 }}                 exit={{ scale: 0.95, opacity: 0, y: 20 }}                 className="bg-card border border-border w-full max-w-lg rounded-2xl p-6 md:p-8 relative shadow-2xl m-auto text-foreground"              >                <button onClick={() => setIsFormModalOpen(false)} className="absolute right-5 top-5 text-muted-foreground hover:text-foreground bg-secondary/50 p-1.5 rounded-lg transition-colors"><X size={20}/></button>                <h2 className="text-2xl font-bold mb-6 text-white">{isEditMode ? 'Редагувати дані' : 'Новий співробітник'}</h2>                <form onSubmit={handleSubmit} className="space-y-5">                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">                    <div>                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ім'я</label>                      <input required type="text" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />                    </div>                    <div>                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Прізвище</label>                      <input required type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />                    </div>                    <div className="col-span-1 md:col-span-2">                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email</label>                      <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />                    </div>                    <div>                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Посада</label>                      <input required type="text" value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />                    </div>                    <div>                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Відділ</label>                      <input required type="text" value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white" />                    </div>                    <div className="col-span-1 md:col-span-2">                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Статус</label>                      <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full bg-secondary/50 border border-border focus:border-primary rounded-xl p-3 mt-1.5 text-sm outline-none transition-colors text-white">                        <option value="Активний">Активний</option>                        <option value="Вiдпустка">Вiдпустка</option>                        <option value="Звільнений">Звільнений</option>                      </select>                    </div>                  </div>                  <div className="pt-2 flex justify-end gap-3">                    <button type="button" onClick={() => setIsFormModalOpen(false)} className="px-5 py-3 rounded-xl font-semibold hover:bg-secondary transition-all text-gray-300">Скасувати</button>                    <button type="submit" className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_15px_rgba(var(--primary),0.3)]">                      {isEditMode ? 'Зберегти зміни' : 'Додати співробітника'}                    </button>                  </div>                </form>              </motion.div>            </div>          )}        </AnimatePresence>,        document.body      )}      {typeof document !== 'undefined' && createPortal(        <AnimatePresence>          {isProfileOpen && selectedEmployee && (            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">              <motion.div                 initial={{ scale: 0.95, opacity: 0, y: 20 }}                 animate={{ scale: 1, opacity: 1, y: 0 }}                 exit={{ scale: 0.95, opacity: 0, y: 20 }}                 className="bg-card border border-border w-full max-w-xl rounded-3xl overflow-hidden relative shadow-2xl m-auto text-foreground"              >                <button onClick={() => setIsProfileOpen(false)} className="absolute right-5 top-5 text-white/70 hover:text-white bg-black/20 p-2 rounded-xl transition-colors z-10 backdrop-blur-md"><X size={20}/></button>                <div className="bg-gradient-to-br from-primary/30 via-primary/10 to-card p-8 border-b border-border/50 flex items-center gap-6 relative overflow-hidden">                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-4xl font-black text-white shadow-xl shadow-primary/20 shrink-0">                    {selectedEmployee.firstName.charAt(0)}{selectedEmployee.lastName.charAt(0)}                  </div>                  <div className="relative z-10">                    <h2 className="text-3xl font-extrabold text-white mb-2">{selectedEmployee.firstName} {selectedEmployee.lastName}</h2>                    <div className="flex flex-col gap-1.5">                      <p className="text-blue-300 font-medium flex items-center gap-2"><Briefcase size={16}/> {selectedEmployee.position} • {selectedEmployee.department}</p>                      <p className="text-gray-400 text-sm flex items-center gap-2"><Mail size={16}/> {selectedEmployee.email}</p>                    </div>                  </div>                </div>                <div className="p-8 pt-6 flex flex-col gap-6 bg-card">                  <div>                    <div className="flex justify-between items-end mb-4">                      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">                        <Tag size={16}/> Закріплена техніка ({selectedEmployee.assets.length})                      </h3>                    </div>                    {selectedEmployee.assets.length > 0 ? (                      <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">                        {selectedEmployee.assets.map(asset => (                          <div key={asset.id} className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-secondary/30 hover:bg-secondary/50 transition-colors group">                            <div className="flex items-center gap-4">                              <div className="p-3 rounded-lg bg-black/30 border border-white/5 group-hover:scale-110 transition-transform">                                {getAssetIcon(asset.category)}                              </div>                              <div>                                <div className="text-sm font-bold text-white">{asset.name}</div>                                <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">                                  {asset.brand && <span>{asset.brand} {asset.model}</span>}                                  {asset.serial_number && <span className="font-mono text-gray-500 bg-black/40 px-1.5 py-0.5 rounded">С/Н: {asset.serial_number}</span>}                                </div>                              </div>                            </div>                          </div>                        ))}                      </div>                    ) : (                      <div className="text-center py-10 border border-dashed border-white/10 rounded-2xl bg-secondary/10">                        <Laptop className="mx-auto text-gray-600 mb-3 opacity-50" size={32} />                        <p className="text-base font-medium text-gray-400">Техніки ще немає</p>                        <p className="text-sm text-gray-500 mt-1">За співробітником не закріплено жодного активу.</p>                      </div>                    )}                  </div>                </div>              </motion.div>            </div>          )}        </AnimatePresence>,        document.body      )}    </motion.div>  );}

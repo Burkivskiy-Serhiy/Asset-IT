@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState } from 'react';
 import { 
   Search, 
@@ -32,13 +31,11 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-
 interface AssetTableProps {
   assets: Asset[];
   onDelete: (id: string) => void;
   onEdit: (asset: Asset) => void;
 }
-
 const getStatusStyles = (status: AssetStatus) => {
   switch (status) {
     case 'active': return 'text-emerald-500 bg-emerald-500/10';
@@ -48,7 +45,6 @@ const getStatusStyles = (status: AssetStatus) => {
     default: return 'text-slate-500 bg-slate-500/10';
   }
 };
-
 const getStatusLabel = (status: AssetStatus) => {
   switch (status) {
     case 'active': return 'Активний';
@@ -58,24 +54,18 @@ const getStatusLabel = (status: AssetStatus) => {
     default: return status;
   }
 };
-
 export default function AssetTable({ assets = [], onDelete, onEdit }: AssetTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<AssetType | 'all'>('all');
-
   const filteredAssets = assets.filter(asset => {
     const matchesSearch = (asset.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (asset.owner || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterType === 'all' || asset.type === filterType;
-    
     return matchesSearch && matchesFilter;
   });
-
   const handleExportCSV = () => {
     if (filteredAssets.length === 0) return;
-
     const headers = ['Назва активу', 'Серійний номер', 'Тип', 'Статус', 'Власник', 'Локація', 'Дата придбання'];
-    
     const rows = filteredAssets.map(asset => [
       asset.name,
       asset.serialNumber || asset.id,
@@ -85,10 +75,8 @@ export default function AssetTable({ assets = [], onDelete, onEdit }: AssetTable
       asset.location,
       asset.purchaseDate
     ]);
-
     const csvContent = '\uFEFF' 
       + [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -98,7 +86,6 @@ export default function AssetTable({ assets = [], onDelete, onEdit }: AssetTable
     link.click();
     document.body.removeChild(link);
   };
-
   return (
     <div className="glass-panel p-6 overflow-hidden border-none">
       <div className="flex justify-between items-center mb-6 gap-4">
@@ -111,9 +98,7 @@ export default function AssetTable({ assets = [], onDelete, onEdit }: AssetTable
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
         <div className="flex gap-2">
-          {/* Кнопка Експорту */}
           <Button 
             variant="outline" 
             onClick={handleExportCSV}
@@ -123,8 +108,6 @@ export default function AssetTable({ assets = [], onDelete, onEdit }: AssetTable
             <Download size={18} />
             <span>Експорт</span>
           </Button>
-
-          {/* Випадаюче меню для фільтрів */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -165,7 +148,6 @@ export default function AssetTable({ assets = [], onDelete, onEdit }: AssetTable
           </DropdownMenu>
         </div>
       </div>
-
       <div className="rounded-xl border border-white/10 overflow-hidden">
         <Table>
           <TableHeader className="bg-white/5">

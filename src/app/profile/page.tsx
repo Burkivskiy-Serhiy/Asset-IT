@@ -1,37 +1,30 @@
 'use client';
-
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { User, Mail, Shield, Key, Clock, Settings, Laptop, Ticket, Loader2, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-
 export default function ProfilePage() {
   const { data: session } = useSession();
-  
   const userRole = (session?.user as any)?.role || 'guest';
   const userName = session?.user?.name || 'Невідомий користувач';
   const userEmail = session?.user?.email || 'Немає email';
-
   const [logs, setLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
-
   useEffect(() => {
     if (userName) {
       fetch('/api/logs')
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
-            // Фільтруємо логи лише для цього юзера
             const myLogs = data.filter(log => log.actor === userName || log.actor === userEmail);
-            setLogs(myLogs.slice(0, 10)); // Беремо останні 10 дій
+            setLogs(myLogs.slice(0, 10)); 
           }
           setLoadingLogs(false);
         })
         .catch(() => setLoadingLogs(false));
     }
   }, [userName, userEmail]);
-
   const getRoleLabel = (r: string) => {
     switch (r) {
       case 'admin': return 'Головний Адміністратор';
@@ -40,24 +33,18 @@ export default function ProfilePage() {
       default: return 'Гість';
     }
   };
-
   const getInitials = (name: string) => {
     if (!name) return 'US';
     const parts = name.trim().split(' ');
     if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.substring(0, 2).toUpperCase();
   };
-
   return (
     <div className="p-8 max-w-[1200px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      {/* Шапка профілю */}
       <div className="relative rounded-3xl overflow-hidden bg-[#141414] border border-border shadow-2xl">
-        {/* Баннер (Фон) */}
         <div className="h-48 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative overflow-hidden flex items-end pb-6 px-8 sm:px-12">
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30 mix-blend-overlay" />
-          
           <div className="relative z-10 w-full flex flex-col sm:flex-row justify-between sm:items-end gap-4 ml-36">
             <div className="space-y-1">
               <h1 className="text-3xl font-extrabold text-white tracking-tight">{userName}</h1>
@@ -65,7 +52,6 @@ export default function ProfilePage() {
                 <Mail size={14} /> {userEmail}
               </p>
             </div>
-            
             <div className="flex items-center gap-3 self-start sm:self-auto pb-1">
               <div className="px-4 py-1.5 bg-background/40 backdrop-blur-md border border-primary/40 text-primary rounded-xl font-semibold flex items-center gap-2 text-sm shadow-xl">
                 <Shield size={16} />
@@ -74,28 +60,21 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-        
-        {/* Аватар (Абсолютно по центру лінії банера) */}
         <div className="absolute left-8 top-32 z-20">
           <div className="w-32 h-32 rounded-full border-[6px] border-[#141414] bg-[#0a0a0a] flex items-center justify-center text-4xl font-black text-primary shadow-2xl relative">
             {getInitials(userName)}
             <div className="absolute bottom-2 right-2 w-4 h-4 bg-primary rounded-full border-2 border-[#141414]" title="Онлайн" />
           </div>
         </div>
-        
-        {/* Нижня пуста частина картки */}
         <div className="h-20 w-full" />
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Ліва колонка: Деталі */}
         <div className="space-y-8">
           <Card className="bg-card border-border rounded-2xl">
             <CardContent className="p-6 space-y-6">
               <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-border pb-4">
                 <User size={18} className="text-blue-400" /> Особисті дані
               </h3>
-              
               <div className="space-y-4">
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase mb-1">Повне ім'я</p>
@@ -114,13 +93,11 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-
           <Card className="bg-card border-border rounded-2xl">
             <CardContent className="p-6 space-y-6">
               <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-border pb-4">
                 <Key size={18} className="text-amber-400" /> Безпека
               </h3>
-              
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -136,8 +113,6 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Права колонка: Статистика та Активність */}
         <div className="md:col-span-2 space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <motion.div whileHover={{ y: -5 }} className="bg-gradient-to-br from-card/80 to-card p-6 rounded-2xl flex items-center gap-5 border border-border shadow-lg">
@@ -149,13 +124,11 @@ export default function ProfilePage() {
               <div><p className="text-sm font-medium text-gray-400">Відкриті тікети</p><h3 className="text-2xl font-black text-white">0 шт.</h3></div>
             </motion.div>
           </div>
-
           <Card className="bg-card border-border rounded-2xl min-h-[400px]">
             <CardContent className="p-6">
               <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-border pb-4 mb-6">
                 <Clock size={18} className="text-emerald-400" /> Останні дії
               </h3>
-              
               {loadingLogs ? (
                 <div className="flex justify-center items-center h-[250px]">
                   <Loader2 className="animate-spin text-primary" size={32} />

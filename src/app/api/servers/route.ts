@@ -1,32 +1,1 @@
-import { neon } from '@neondatabase/serverless';
-import { NextResponse } from 'next/server';
-import { logAction } from '@/lib/logger';
-
-const sql = neon(process.env.DATABASE_URL!);
-
-export async function GET() {
-  try {
-    const data = await sql`SELECT * FROM servers ORDER BY "createdAt" ASC`;
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Servers GET Error:', error);
-    return NextResponse.json({ error: 'Помилка завантаження серверів' }, { status: 500 });
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    const { id, name, ip, type, status, cpu, ram, uptime } = await req.json();
-    
-    const result = await sql`
-      INSERT INTO servers (id, name, ip, type, status, cpu, ram, uptime)
-      VALUES (${id}, ${name}, ${ip}, ${type}, ${status}, ${cpu}, ${ram}, ${uptime})
-      RETURNING *
-    `;
-    await logAction('Система', 'info', 'Сервери', `Додано сервер: ${name}`);
-    return NextResponse.json(result[0]);
-  } catch (error) {
-    console.error('Servers POST Error:', error);
-    return NextResponse.json({ error: 'Помилка створення сервера' }, { status: 500 });
-  }
-}
+import { neon } from '@neondatabase/serverless';import { NextResponse } from 'next/server';import { logAction } from '@/lib/logger';const sql = neon(process.env.DATABASE_URL!);export async function GET() {  try {    const data = await sql`SELECT * FROM servers ORDER BY "createdAt" ASC`;    return NextResponse.json(data);  } catch (error) {    console.error('Servers GET Error:', error);    return NextResponse.json({ error: 'Помилка завантаження серверів' }, { status: 500 });  }}export async function POST(req: Request) {  try {    const { id, name, ip, type, status, cpu, ram, uptime } = await req.json();    const result = await sql`      INSERT INTO servers (id, name, ip, type, status, cpu, ram, uptime)      VALUES (${id}, ${name}, ${ip}, ${type}, ${status}, ${cpu}, ${ram}, ${uptime})      RETURNING *    `;    await logAction('Система', 'info', 'Сервери', `Додано сервер: ${name}`);    return NextResponse.json(result[0]);  } catch (error) {    console.error('Servers POST Error:', error);    return NextResponse.json({ error: 'Помилка створення сервера' }, { status: 500 });  }}

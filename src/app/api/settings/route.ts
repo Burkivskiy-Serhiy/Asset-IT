@@ -1,75 +1,1 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; 
-import { logAction } from '@/lib/logger'; 
-
-export async function GET() {
-  try {
-    let settings = await prisma.systemSettings.findUnique({
-      where: { id: 1 },
-    });
-    
-    if (!settings) {
-      settings = await prisma.systemSettings.create({
-        data: { id: 1 }
-      });
-    }
-    
-    return NextResponse.json(settings);
-  } catch (error) {
-    console.error('Помилка отримання налаштувань:', error);
-    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 });
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    
-    const updatedSettings = await prisma.systemSettings.upsert({
-      where: { id: 1 },
-      update: {
-        currency: body.currency,
-        assetPrefix: body.assetPrefix,
-        emailNotif: body.emailNotif,
-        slackNotif: body.slackNotif,
-        slackWebhook: body.slackWebhook,
-        maintenanceMode: body.maintenanceMode,
-        adminName: body.adminName,
-        adminEmail: body.adminEmail,
-      },
-      create: {
-        id: 1,
-        currency: body.currency || 'UAH',
-        assetPrefix: body.assetPrefix || 'ITA-',
-        emailNotif: body.emailNotif ?? true,
-        slackNotif: body.slackNotif ?? false,
-        slackWebhook: body.slackWebhook || '',
-        maintenanceMode: body.maintenanceMode ?? false,
-        adminName: body.adminName || 'Asset-IT',
-        adminEmail: body.adminEmail || 'admin@asset-it.com',
-      }
-    });
-    
-    await logAction('Адміністратор', 'warning', 'Налаштування', 'Оновлено системні налаштування');
-    return NextResponse.json(updatedSettings);
-  } catch (error) {
-    console.error('Помилка збереження налаштувань:', error);
-    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 });
-  }
-}
-
-export async function DELETE() {
-  try {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    await logAction('Адміністратор', 'error', 'Небезпечна зона', 'Реініціалізація бази даних (WIPE)');
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Системні таблиці успішно реініціалізовано.' 
-    });
-  } catch (error) {
-    console.error('Помилка при очищенні бази даних:', error);
-    return NextResponse.json({ error: 'Помилка сервера при скиданні' }, { status: 500 });
-  }
-}
+import { NextResponse } from 'next/server';import { prisma } from '@/lib/prisma'; import { logAction } from '@/lib/logger'; export async function GET() {  try {    let settings = await prisma.systemSettings.findUnique({      where: { id: 1 },    });    if (!settings) {      settings = await prisma.systemSettings.create({        data: { id: 1 }      });    }    return NextResponse.json(settings);  } catch (error) {    console.error('Помилка отримання налаштувань:', error);    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 });  }}export async function POST(request: Request) {  try {    const body = await request.json();    const updatedSettings = await prisma.systemSettings.upsert({      where: { id: 1 },      update: {        currency: body.currency,        assetPrefix: body.assetPrefix,        emailNotif: body.emailNotif,        slackNotif: body.slackNotif,        slackWebhook: body.slackWebhook,        maintenanceMode: body.maintenanceMode,        adminName: body.adminName,        adminEmail: body.adminEmail,      },      create: {        id: 1,        currency: body.currency || 'UAH',        assetPrefix: body.assetPrefix || 'ITA-',        emailNotif: body.emailNotif ?? true,        slackNotif: body.slackNotif ?? false,        slackWebhook: body.slackWebhook || '',        maintenanceMode: body.maintenanceMode ?? false,        adminName: body.adminName || 'Asset-IT',        adminEmail: body.adminEmail || 'admin@asset-it.com',      }    });    await logAction('Адміністратор', 'warning', 'Налаштування', 'Оновлено системні налаштування');    return NextResponse.json(updatedSettings);  } catch (error) {    console.error('Помилка збереження налаштувань:', error);    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 });  }}export async function DELETE() {  try {    await new Promise((resolve) => setTimeout(resolve, 1500));    await logAction('Адміністратор', 'error', 'Небезпечна зона', 'Реініціалізація бази даних (WIPE)');    return NextResponse.json({       success: true,       message: 'Системні таблиці успішно реініціалізовано.'     });  } catch (error) {    console.error('Помилка при очищенні бази даних:', error);    return NextResponse.json({ error: 'Помилка сервера при скиданні' }, { status: 500 });  }}

@@ -1,19 +1,15 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Plus, Wrench, AlertTriangle, CheckCircle, Calendar, Trash2, X, Search } from 'lucide-react';
-
 export default function MaintenancePage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
-
   const [formData, setFormData] = useState({
     assetId: '',
     title: '',
@@ -21,7 +17,6 @@ export default function MaintenancePage() {
     scheduledAt: '',
     type: 'ТО'
   });
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -37,11 +32,9 @@ export default function MaintenancePage() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchData();
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -61,7 +54,6 @@ export default function MaintenancePage() {
       console.error(error);
     }
   };
-
   const markAsCompleted = async (id: string) => {
     try {
       await fetch('/api/maintenance', {
@@ -74,7 +66,6 @@ export default function MaintenancePage() {
       console.error(error);
     }
   };
-
   const handleDelete = async (id: string) => {
     if (!confirm('Видалити завдання?')) return;
     try {
@@ -84,31 +75,26 @@ export default function MaintenancePage() {
       console.error(error);
     }
   };
-
   const getAssetInfo = (assetId: string) => {
     const asset = assets.find(a => a.id === assetId);
     return asset ? `${asset.name} (${asset.serial_number || 'S/N відсутній'})` : 'Невідомий актив';
   };
-
   const isOverdue = (dateString: string, status: string) => {
     if (status === 'Виконано') return false;
     return new Date(dateString) < new Date();
   };
-
   const filteredTasks = tasks.filter(task => {
     const assetName = getAssetInfo(task.assetId).toLowerCase();
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || assetName.includes(searchQuery.toLowerCase());
     const matchesFilter = filterType === 'all' || task.type === filterType;
     return matchesSearch && matchesFilter;
   });
-
   const stats = {
     total: tasks.length,
     planned: tasks.filter(t => t.status !== 'Виконано' && !isOverdue(t.scheduledAt, t.status)).length,
     overdue: tasks.filter(t => isOverdue(t.scheduledAt, t.status)).length,
     completed: tasks.filter(t => t.status === 'Виконано').length
   };
-
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div className="flex justify-between items-end">
@@ -125,7 +111,6 @@ export default function MaintenancePage() {
           <Plus size={18} /> Нове завдання
         </button>
       </div>
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-card/40 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center">
           <span className="text-3xl font-bold text-white">{stats.total}</span>
@@ -144,7 +129,6 @@ export default function MaintenancePage() {
           <span className="text-sm text-gray-400 mt-1">Виконано</span>
         </div>
       </div>
-
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -166,7 +150,6 @@ export default function MaintenancePage() {
           <option value="Гарантія">Гарантія</option>
         </select>
       </div>
-
       {loading ? (
         <div className="text-center text-gray-500 py-10">Завантаження графіка...</div>
       ) : (
@@ -204,10 +187,8 @@ export default function MaintenancePage() {
                       </button>
                     </div>
                   </div>
-                  
                   <h3 className="text-lg font-bold text-white mb-1">{task.title}</h3>
                   <p className="text-sm text-gray-400 mb-4">{getAssetInfo(task.assetId)}</p>
-                  
                   <div className="space-y-2 text-sm text-gray-300">
                     <div className="flex items-center gap-2">
                       <Calendar size={15} className={overdue ? "text-red-400" : "text-gray-500"} />
@@ -220,7 +201,6 @@ export default function MaintenancePage() {
                       </div>
                     )}
                   </div>
-                  
                   {overdue && (
                     <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-red-400 bg-red-500/10 p-2 rounded-lg">
                       <AlertTriangle size={14} /> Прострочено!
@@ -237,7 +217,6 @@ export default function MaintenancePage() {
           )}
         </div>
       )}
-
       {isModalOpen && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
           <div className="bg-card border border-border w-full max-w-md rounded-2xl p-6 shadow-2xl relative m-auto">
@@ -245,7 +224,6 @@ export default function MaintenancePage() {
               <X size={20} />
             </button>
             <h2 className="text-xl font-bold text-white mb-6">Нове завдання ТО</h2>
-            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-sm text-gray-400">Обладнання (Актив)</label>
@@ -256,12 +234,10 @@ export default function MaintenancePage() {
                   ))}
                 </select>
               </div>
-              
               <div>
                 <label className="text-sm text-gray-400">Назва робіт</label>
                 <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Напр. Заміна термопасти" className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1" />
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-400">Дата</label>
@@ -275,12 +251,10 @@ export default function MaintenancePage() {
                   </select>
                 </div>
               </div>
-              
               <div>
                 <label className="text-sm text-gray-400">Деталі (опціонально)</label>
                 <textarea rows={2} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white mt-1" />
               </div>
-              
               <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 rounded-xl transition-colors mt-2">
                 Запланувати
               </button>

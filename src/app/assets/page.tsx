@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
@@ -7,7 +6,6 @@ import { Plus, Database, Laptop, Server, Monitor, Printer, Network, Pencil, Tras
 import { useSession } from 'next-auth/react';
 import QRCodeModal from '@/components/ui/QRCodeModal';
 import QRScannerModal from '@/components/ui/QRScannerModal';
-
 const getCategoryIcon = (category: string) => {
   switch (category) {
     case 'Ноутбук': return <Laptop size={16} />;
@@ -18,28 +16,22 @@ const getCategoryIcon = (category: string) => {
     default: return <Database size={16} />;
   }
 };
-
 export default function AssetsPage() {
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || 'guest';
   const canEdit = userRole === 'admin' || userRole === 'tech';
-
   const [assets, setAssets] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [selectedQRAsset, setSelectedQRAsset] = useState<any | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-
   const [formData, setFormData] = useState({
     name: '',
     status: 'active',
@@ -54,13 +46,11 @@ export default function AssetsPage() {
     locationRoom: '',
     warrantyExpires: ''
   });
-
   const fetchAssets = async () => {
     try {
       const timestamp = new Date().getTime();
       const res = await fetch(`/api/assets?t=${timestamp}`, { cache: 'no-store' });
       const data = await res.json();
-      
       if (Array.isArray(data)) {
         setAssets(data);
       } else if (data && Array.isArray(data.assets)) {
@@ -76,7 +66,6 @@ export default function AssetsPage() {
       setLoading(false);
     }
   };
-
   const fetchEmployees = async () => {
     try {
       const res = await fetch('/api/employees');
@@ -90,12 +79,10 @@ export default function AssetsPage() {
       console.error("Помилка завантаження працівників для селекту:", error);
     }
   };
-
   useEffect(() => {
     fetchAssets();
     fetchEmployees(); 
   }, []);
-
   const handleEditClick = (asset: any) => {
     setIsEditing(true);
     setIsFormModalOpen(true);
@@ -107,7 +94,6 @@ export default function AssetsPage() {
     } catch (e) {
       if (asset.location) parsedLocation.office = asset.location;
     }
-
     setFormData({
       name: asset.name,
       status: asset.status,
@@ -123,31 +109,24 @@ export default function AssetsPage() {
       warrantyExpires: asset.warrantyExpires ? new Date(asset.warrantyExpires).toISOString().split('T')[0] : ''
     });
   };
-
   const cancelEdit = () => {
     setIsEditing(false);
     setIsFormModalOpen(false);
     setEditId(null);
     setFormData({ name: '', status: 'active', category: 'Ноутбук', brand: '', model: '', serial_number: '', specs: '', assignedTo: '', locationOffice: 'Головний офіс', locationFloor: '', locationRoom: '', warrantyExpires: '' });
   };
-
   const handleDelete = async (id: number) => {
     if (!confirm('Ви впевнені, що хочете видалити цей актив з каталогу?')) return;
-
     const assetToDelete = assets.find(a => a.id === id);
-
     try {
       const res = await fetch(`/api/assets/${id}`, {
         method: 'DELETE',
       });
-      
       if (res.ok) {
         if (assetToDelete) {
           const now = new Date();
           const timeStr = now.toTimeString().split(' ')[0];
-          
           const currentActor = session?.user?.name || session?.user?.email || 'Система';
-          
           const deleteLog = {
             id: `log-${Date.now()}`,
             time: timeStr,
@@ -156,14 +135,12 @@ export default function AssetsPage() {
             source: 'ASSETS',
             text: `Безповоротно видалено актив: "${assetToDelete.name}" [S/N: ${assetToDelete.serial_number || 'Немає'}]`
           };
-
           await fetch('/api/logs', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(deleteLog),
           });
         }
-
         fetchAssets();
         if (editId === id) cancelEdit(); 
       } else {
@@ -175,38 +152,31 @@ export default function AssetsPage() {
       alert('Мережева помилка при спробі видалити актив.');
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const url = isEditing ? `/api/assets/${editId}` : '/api/assets';
       const method = isEditing ? 'PUT' : 'POST';
-
       const dataToSend: any = { ...formData };
       if (['retired', 'missing'].includes(dataToSend.status)) {
         dataToSend.assignedTo = '';
       }
-      
       dataToSend.location = JSON.stringify({
         office: formData.locationOffice,
         floor: formData.locationFloor,
         room: formData.locationRoom
       });
-
       const res = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend),
       });
-
       if (res.ok) {
         const now = new Date();
         const timeStr = now.toTimeString().split(' ')[0];
         const logType = isEditing ? 'warning' : 'info';
         const actionText = isEditing ? 'Оновлено дані активу' : 'Додано новий актив';
-        
         const currentActor = session?.user?.name || session?.user?.email || 'Система';
-        
         const auditLog = {
           id: `log-${Date.now()}`,
           time: timeStr,
@@ -215,13 +185,11 @@ export default function AssetsPage() {
           source: 'ASSETS',
           text: `${actionText}: "${dataToSend.name}" [Категорія: ${dataToSend.category}]`
         };
-
         await fetch('/api/logs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(auditLog),
         });
-
         cancelEdit();
         fetchAssets();
       } else {
@@ -233,21 +201,16 @@ export default function AssetsPage() {
       alert('Мережева помилка при збереженні форми.');
     }
   };
-
   const safeAssets = Array.isArray(assets) ? assets : [];
-
   const filteredAssets = safeAssets.filter((asset) => {
     const matchesSearch = 
       asset.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
       asset.serial_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.assignedTo?.toLowerCase().includes(searchQuery.toLowerCase()); 
-    
     const matchesCategory = filterCategory === 'all' || asset.category === filterCategory;
     const matchesStatus = filterStatus === 'all' || asset.status === filterStatus;
-
     return matchesSearch && matchesCategory && matchesStatus;
   });
-
   return (
     <div className="p-8 max-w-[1600px] mx-auto space-y-8">
       <div className="flex justify-between items-end">
@@ -265,7 +228,6 @@ export default function AssetsPage() {
           </button>
         )}
       </div>
-
       {isFormModalOpen && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
           <motion.div 
@@ -282,7 +244,6 @@ export default function AssetsPage() {
                 <X size={18} />
               </button>
             </div>
-            
             <form onSubmit={handleSubmit} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
@@ -299,7 +260,6 @@ export default function AssetsPage() {
                 </select>
               </div>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs text-gray-400">Категорія</label>
@@ -321,7 +281,6 @@ export default function AssetsPage() {
                 <input type="text" placeholder="XPS 15" value={formData.model} onChange={e => setFormData({...formData, model: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white mt-1 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" />
               </div>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-400">Серійний номер / S/N</label>
@@ -344,8 +303,6 @@ export default function AssetsPage() {
                 </select>
               </div>
             </div>
-
-            {/* МІСЦЕЗНАХОДЖЕННЯ */}
             <div className="space-y-2 pt-2 border-t border-white/5">
               <h3 className="text-xs font-semibold text-gray-300 flex items-center gap-1"><MapPin size={14} className="text-primary"/> Геолокація</h3>
               <div className="grid grid-cols-3 gap-3">
@@ -368,7 +325,6 @@ export default function AssetsPage() {
                 </div>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
               <div className="col-span-2 sm:col-span-1">
                 <label className="text-xs text-gray-400">Характеристики</label>
@@ -379,7 +335,6 @@ export default function AssetsPage() {
                 <input type="date" value={formData.warrantyExpires} onChange={e => setFormData({...formData, warrantyExpires: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white mt-1 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" />
               </div>
             </div>
-
             <button type="submit" className={`w-full font-semibold py-2.5 rounded-lg mt-4 shadow-lg transition-all text-white ${
               isEditing ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-amber-500/20' : 'bg-gradient-to-r from-primary to-blue-600 hover:from-primary/80 hover:to-blue-500 shadow-primary/20'
             }`}>
@@ -390,8 +345,6 @@ export default function AssetsPage() {
         </div>,
         document.body
       )}
-
-      {/* ТАБЛИЦЯ ТА ПАНЕЛЬ ФІЛЬТРІВ */}
       <div className="bg-card/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl w-full">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
@@ -404,7 +357,6 @@ export default function AssetsPage() {
                 className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all duration-300"
               />
             </div>
-            
             <button 
               onClick={() => setIsScannerOpen(true)}
               className="px-4 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl hover:bg-primary/20 transition-colors flex items-center justify-center gap-2 font-medium shrink-0"
@@ -413,7 +365,6 @@ export default function AssetsPage() {
               <QrCode size={18} />
               <span className="hidden sm:inline">Сканувати</span>
             </button>
-
             <div className="flex gap-4">
               <select 
                 value={filterCategory} 
@@ -428,7 +379,6 @@ export default function AssetsPage() {
                 <option value="Мережа">Мережа</option>
                 <option value="Інше">Інше</option>
               </select>
-
               <select 
                 value={filterStatus} 
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -442,7 +392,6 @@ export default function AssetsPage() {
               </select>
             </div>
           </div>
-
           {loading ? (
             <div className="text-center text-gray-500 py-10">Завантаження каталогу...</div>
           ) : (
@@ -506,8 +455,6 @@ export default function AssetsPage() {
                               </div>
                               <span className="text-sm text-gray-300">{asset.assignedTo}</span>
                             </div>
-                            
-                            {/* Відображення локації */}
                             {asset.location && (
                               <div className="flex flex-col text-[11px] text-gray-500 pl-8">
                                 {(() => {
@@ -529,7 +476,6 @@ export default function AssetsPage() {
                         ) : (
                           <div className="flex flex-col gap-1.5">
                             <span className="text-sm text-gray-600 italic">На складі</span>
-                            {/* Відображення локації для складу */}
                             {asset.location && (
                               <div className="flex flex-col text-[11px] text-gray-500">
                                 {(() => {
@@ -580,7 +526,6 @@ export default function AssetsPage() {
                       </td>
                     </motion.tr>
                   ))}
-                  
                   {filteredAssets.length === 0 && (
                     <tr>
                       <td colSpan={5} className="text-center py-12 text-gray-500">
@@ -595,13 +540,11 @@ export default function AssetsPage() {
             </div>
           )}
         </div>
-
       <QRCodeModal 
         isOpen={isQRModalOpen} 
         onClose={() => setIsQRModalOpen(false)} 
         asset={selectedQRAsset} 
       />
-      
       <QRScannerModal 
         isOpen={isScannerOpen} 
         onClose={() => setIsScannerOpen(false)} 

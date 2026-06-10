@@ -1,361 +1,1 @@
-export async function sendSlackNotification(webhookUrl: string, payload: any) {
-  if (!webhookUrl) {
-    console.error("Slack Webhook URL відсутній");
-    return false;
-  }
-
-  try {
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Slack API error: ${errorText}`);
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Помилка відправки в Slack:", error);
-    return false;
-  }
-}
-
-export async function sendLicenseExpirationAlert(webhookUrl: string, license: any, daysLeft: number) {
-  let color = "#facc15"; // Yellow for 30 days
-  let emoji = "⚠️";
-  
-  if (daysLeft <= 7) {
-    color = "#ef4444"; // Red for 7 days
-    emoji = "🚨";
-  } else if (daysLeft <= 14) {
-    color = "#f97316"; // Orange for 14 days
-    emoji = "🔔";
-  }
-
-  const payload = {
-    attachments: [
-      {
-        color: color,
-        blocks: [
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: `${emoji} Наближається закінчення ліцензії!`,
-              emoji: true
-            }
-          },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `*ПЗ / Сервіс:*\n${license.name}`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Залишилось днів:*\n*${daysLeft}*`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Дата закінчення:*\n${new Date(license.expirationDate).toLocaleDateString('uk-UA')}`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Використано місць:*\n${license.usedSeats} / ${license.totalSeats}`
-              }
-            ]
-          },
-          {
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "Переглянути в системі",
-                  emoji: true
-                },
-                url: "http://localhost:3000/licenses",
-                action_id: "view_license"
-              }
-            ]
-          },
-          {
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: "Будь ласка, вживіть заходів для оновлення ліцензії, щоб уникнути перебоїв у роботі."
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  };
-
-  return sendSlackNotification(webhookUrl, payload);
-}
-
-export async function sendHelpdeskAlert(webhookUrl: string, ticket: any) {
-  let color = "#3b82f6"; // Blue default
-  if (ticket.priority === "Високий") color = "#f97316";
-  if (ticket.priority === "Критичний") color = "#ef4444";
-
-  const payload = {
-    attachments: [
-      {
-        color: color,
-        blocks: [
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: `🎫 Новий тікет техпідтримки!`,
-              emoji: true
-            }
-          },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `*Користувач:*\n${ticket.user}`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Пріоритет:*\n${ticket.priority}`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Тема:*\n${ticket.title}`
-              }
-            ]
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*Опис проблеми:*\n> ${ticket.description}`
-            }
-          },
-          {
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "Відкрити тікет",
-                  emoji: true
-                },
-                url: `http://localhost:3000/helpdesk?ticket=${ticket.id}`,
-                style: "primary",
-                action_id: "open_ticket"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  };
-
-  return sendSlackNotification(webhookUrl, payload);
-}
-
-export async function sendServerAlert(webhookUrl: string, server: any) {
-  const payload = {
-    attachments: [
-      {
-        color: "#ef4444", // Red
-        blocks: [
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: `🔥 Увага: Проблема з сервером!`,
-              emoji: true
-            }
-          },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `*Сервер:*\n${server.name} (${server.ip})`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Тип:*\n${server.type}`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Статус:*\n*OFFLINE*`
-              }
-            ]
-          },
-          {
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "Перевірити моніторинг",
-                  emoji: true
-                },
-                url: "http://localhost:3000/monitoring",
-                style: "danger",
-                action_id: "view_monitoring"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  };
-
-  return sendSlackNotification(webhookUrl, payload);
-}
-
-export async function sendDailyDigest(webhookUrl: string, stats: any) {
-  const payload = {
-    attachments: [
-      {
-        color: "#10b981", // Green
-        blocks: [
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: `☕ Ранковий IT Дайджест`,
-              emoji: true
-            }
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: "Доброго ранку! Ось зведення по поточних завданнях IT-відділу:"
-            }
-          },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `*🎫 Відкриті тікети:*\n*${stats.openTickets}* шт.`
-              },
-              {
-                type: "mrkdwn",
-                text: `*🔧 Прострочене ТО:*\n*${stats.overdueMaintenance}* шт.`
-              },
-              {
-                type: "mrkdwn",
-                text: `*⚠️ Ліцензії (<=30 дн):*\n*${stats.expiringLicenses}* шт.`
-              },
-              {
-                type: "mrkdwn",
-                text: `*🛡️ Гарантії (<=30 дн):*\n*${stats.expiringWarranties}* шт.`
-              },
-              {
-                type: "mrkdwn",
-                text: `*🔴 Офлайн сервери:*\n*${stats.offlineServers}* шт.`
-              }
-            ]
-          },
-          {
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "Відкрити Дашборд",
-                  emoji: true
-                },
-                url: "http://localhost:3000/dashboard",
-                action_id: "open_dashboard"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  };
-
-  return sendSlackNotification(webhookUrl, payload);
-}
-
-export async function sendWarrantyExpirationAlert(webhookUrl: string, asset: any, daysLeft: number) {
-  let color = "#facc15"; // Yellow for 30 days
-  let emoji = "⚠️";
-  
-  if (daysLeft <= 7) {
-    color = "#ef4444"; // Red for 7 days
-    emoji = "🚨";
-  } else if (daysLeft <= 14) {
-    color = "#f97316"; // Orange for 14 days
-    emoji = "🔔";
-  }
-
-  const payload = {
-    attachments: [
-      {
-        color: color,
-        blocks: [
-          {
-            type: "header",
-            text: {
-              type: "plain_text",
-              text: `${emoji} Закінчується гарантія на обладнання!`,
-              emoji: true
-            }
-          },
-          {
-            type: "section",
-            fields: [
-              {
-                type: "mrkdwn",
-                text: `*Актив:*\n${asset.name} (${asset.brand} ${asset.model})`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Залишилось днів:*\n*${daysLeft}*`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Дата закінчення:*\n${new Date(asset.warrantyExpires).toLocaleDateString('uk-UA')}`
-              },
-              {
-                type: "mrkdwn",
-                text: `*Серійний номер:*\n${asset.serial_number || 'Не вказано'}`
-              }
-            ]
-          },
-          {
-            type: "actions",
-            elements: [
-              {
-                type: "button",
-                text: {
-                  type: "plain_text",
-                  text: "Відкрити активи",
-                  emoji: true
-                },
-                url: "http://localhost:3000/assets",
-                action_id: "view_assets"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  };
-
-  return sendSlackNotification(webhookUrl, payload);
-}
+export async function sendSlackNotification(webhookUrl: string, payload: any) {  if (!webhookUrl) {    console.error("Slack Webhook URL відсутній");    return false;  }  try {    const response = await fetch(webhookUrl, {      method: 'POST',      headers: { 'Content-Type': 'application/json' },      body: JSON.stringify(payload),    });    if (!response.ok) {      const errorText = await response.text();      throw new Error(`Slack API error: ${errorText}`);    }    return true;  } catch (error) {    console.error("Помилка відправки в Slack:", error);    return false;  }}export async function sendLicenseExpirationAlert(webhookUrl: string, license: any, daysLeft: number) {  let color = "#facc15";   let emoji = "⚠️";  if (daysLeft <= 7) {    color = "#ef4444";     emoji = "🚨";  } else if (daysLeft <= 14) {    color = "#f97316";     emoji = "🔔";  }  const payload = {    attachments: [      {        color: color,        blocks: [          {            type: "header",            text: {              type: "plain_text",              text: `${emoji} Наближається закінчення ліцензії!`,              emoji: true            }          },          {            type: "section",            fields: [              {                type: "mrkdwn",                text: `*ПЗ / Сервіс:*\n${license.name}`              },              {                type: "mrkdwn",                text: `*Залишилось днів:*\n*${daysLeft}*`              },              {                type: "mrkdwn",                text: `*Дата закінчення:*\n${new Date(license.expirationDate).toLocaleDateString('uk-UA')}`              },              {                type: "mrkdwn",                text: `*Використано місць:*\n${license.usedSeats} / ${license.totalSeats}`              }            ]          },          {            type: "actions",            elements: [              {                type: "button",                text: {                  type: "plain_text",                  text: "Переглянути в системі",                  emoji: true                },                url: "http://localhost:3000/licenses",                action_id: "view_license"              }            ]          },          {            type: "context",            elements: [              {                type: "mrkdwn",                text: "Будь ласка, вживіть заходів для оновлення ліцензії, щоб уникнути перебоїв у роботі."              }            ]          }        ]      }    ]  };  return sendSlackNotification(webhookUrl, payload);}export async function sendHelpdeskAlert(webhookUrl: string, ticket: any) {  let color = "#3b82f6";   if (ticket.priority === "Високий") color = "#f97316";  if (ticket.priority === "Критичний") color = "#ef4444";  const payload = {    attachments: [      {        color: color,        blocks: [          {            type: "header",            text: {              type: "plain_text",              text: `🎫 Новий тікет техпідтримки!`,              emoji: true            }          },          {            type: "section",            fields: [              {                type: "mrkdwn",                text: `*Користувач:*\n${ticket.user}`              },              {                type: "mrkdwn",                text: `*Пріоритет:*\n${ticket.priority}`              },              {                type: "mrkdwn",                text: `*Тема:*\n${ticket.title}`              }            ]          },          {            type: "section",            text: {              type: "mrkdwn",              text: `*Опис проблеми:*\n> ${ticket.description}`            }          },          {            type: "actions",            elements: [              {                type: "button",                text: {                  type: "plain_text",                  text: "Відкрити тікет",                  emoji: true                },                url: `http://localhost:3000/helpdesk?ticket=${ticket.id}`,                style: "primary",                action_id: "open_ticket"              }            ]          }        ]      }    ]  };  return sendSlackNotification(webhookUrl, payload);}export async function sendServerAlert(webhookUrl: string, server: any) {  const payload = {    attachments: [      {        color: "#ef4444",         blocks: [          {            type: "header",            text: {              type: "plain_text",              text: `🔥 Увага: Проблема з сервером!`,              emoji: true            }          },          {            type: "section",            fields: [              {                type: "mrkdwn",                text: `*Сервер:*\n${server.name} (${server.ip})`              },              {                type: "mrkdwn",                text: `*Тип:*\n${server.type}`              },              {                type: "mrkdwn",                text: `*Статус:*\n*OFFLINE*`              }            ]          },          {            type: "actions",            elements: [              {                type: "button",                text: {                  type: "plain_text",                  text: "Перевірити моніторинг",                  emoji: true                },                url: "http://localhost:3000/monitoring",                style: "danger",                action_id: "view_monitoring"              }            ]          }        ]      }    ]  };  return sendSlackNotification(webhookUrl, payload);}export async function sendDailyDigest(webhookUrl: string, stats: any) {  const payload = {    attachments: [      {        color: "#10b981",         blocks: [          {            type: "header",            text: {              type: "plain_text",              text: `☕ Ранковий IT Дайджест`,              emoji: true            }          },          {            type: "section",            text: {              type: "mrkdwn",              text: "Доброго ранку! Ось зведення по поточних завданнях IT-відділу:"            }          },          {            type: "section",            fields: [              {                type: "mrkdwn",                text: `*🎫 Відкриті тікети:*\n*${stats.openTickets}* шт.`              },              {                type: "mrkdwn",                text: `*🔧 Прострочене ТО:*\n*${stats.overdueMaintenance}* шт.`              },              {                type: "mrkdwn",                text: `*⚠️ Ліцензії (<=30 дн):*\n*${stats.expiringLicenses}* шт.`              },              {                type: "mrkdwn",                text: `*🛡️ Гарантії (<=30 дн):*\n*${stats.expiringWarranties}* шт.`              },              {                type: "mrkdwn",                text: `*🔴 Офлайн сервери:*\n*${stats.offlineServers}* шт.`              }            ]          },          {            type: "actions",            elements: [              {                type: "button",                text: {                  type: "plain_text",                  text: "Відкрити Дашборд",                  emoji: true                },                url: "http://localhost:3000/dashboard",                action_id: "open_dashboard"              }            ]          }        ]      }    ]  };  return sendSlackNotification(webhookUrl, payload);}export async function sendWarrantyExpirationAlert(webhookUrl: string, asset: any, daysLeft: number) {  let color = "#facc15";   let emoji = "⚠️";  if (daysLeft <= 7) {    color = "#ef4444";     emoji = "🚨";  } else if (daysLeft <= 14) {    color = "#f97316";     emoji = "🔔";  }  const payload = {    attachments: [      {        color: color,        blocks: [          {            type: "header",            text: {              type: "plain_text",              text: `${emoji} Закінчується гарантія на обладнання!`,              emoji: true            }          },          {            type: "section",            fields: [              {                type: "mrkdwn",                text: `*Актив:*\n${asset.name} (${asset.brand} ${asset.model})`              },              {                type: "mrkdwn",                text: `*Залишилось днів:*\n*${daysLeft}*`              },              {                type: "mrkdwn",                text: `*Дата закінчення:*\n${new Date(asset.warrantyExpires).toLocaleDateString('uk-UA')}`              },              {                type: "mrkdwn",                text: `*Серійний номер:*\n${asset.serial_number || 'Не вказано'}`              }            ]          },          {            type: "actions",            elements: [              {                type: "button",                text: {                  type: "plain_text",                  text: "Відкрити активи",                  emoji: true                },                url: "http://localhost:3000/assets",                action_id: "view_assets"              }            ]          }        ]      }    ]  };  return sendSlackNotification(webhookUrl, payload);}

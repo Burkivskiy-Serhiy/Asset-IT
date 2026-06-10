@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
 export async function GET() {
   try {
     const assets = await prisma.asset.findMany();
@@ -11,7 +10,6 @@ export async function GET() {
     const servers = await prisma.server.findMany();
     const tickets = await prisma.ticket.findMany();
     const transfers = await prisma.assetTransfer.findMany();
-
     const backupData = {
       timestamp: new Date().toISOString(),
       version: '1.0',
@@ -26,7 +24,6 @@ export async function GET() {
         transfers
       }
     };
-
     return new NextResponse(JSON.stringify(backupData, null, 2), {
       status: 200,
       headers: {

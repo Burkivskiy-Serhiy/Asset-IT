@@ -1,80 +1,1 @@
-import { neon } from '@neondatabase/serverless';
-import { NextResponse } from 'next/server';
-
-export const dynamic = 'force-dynamic';
-
-const sql = neon(process.env.DATABASE_URL!);
-
-export async function GET() {
-  try {
-    const [
-      totalResult, 
-      statusResult, 
-      categoryResult, 
-      recentResult,
-      totalValueResult,
-      licenseResult,
-      ticketsResult,
-      recentTicketsResult,
-      expiringLicensesResult
-    ] = await Promise.all([
-      sql`SELECT COUNT(*) as count FROM assets`,
-      sql`SELECT status, COUNT(*) as count FROM assets GROUP BY status`,
-      sql`SELECT category, COUNT(*) as count FROM assets GROUP BY category`,
-      sql`SELECT id, name, category, status, brand, model, "serialNumber" FROM assets ORDER BY "createdAt" DESC LIMIT 5`,
-      sql`SELECT SUM(price) as "totalValue" FROM assets`,
-      sql`SELECT SUM("usedSeats") as used, SUM("totalSeats") as total FROM licenses`,
-      sql`SELECT COUNT(*) as count FROM tickets WHERE status NOT IN ('Вирішено', 'Закрито', 'resolved')`,
-      sql`SELECT * FROM tickets WHERE status NOT IN ('Вирішено', 'Закрито', 'resolved') ORDER BY "createdAt" DESC LIMIT 3`,
-      sql`SELECT * FROM licenses WHERE "expirationDate" IS NOT NULL AND "expirationDate" < NOW() + INTERVAL '30 days' ORDER BY "expirationDate" ASC LIMIT 5`
-    ]);
-
-    const formattedRecentAssets = recentResult.map((asset: any) => ({
-      id: asset.id,
-      name: asset.name,
-      category: asset.category,
-      status: asset.status,
-      brand: asset.brand || (asset.name ? asset.name.split(' ')[0] : 'IT'),
-      model: asset.model || (asset.name ? asset.name.split(' ').slice(1).join(' ') : '-'),
-      serial_number: asset.serialNumber || 'S/N відсутній'
-    }));
-
-    const used = Number(licenseResult[0]?.used || 0);
-    const totalLicenses = Number(licenseResult[0]?.total || 0);
-    const licenseUsage = totalLicenses > 0 ? Math.round((used / totalLicenses) * 100) : 0;
-
-    const systemAlerts = expiringLicensesResult.map((lic: any) => {
-      const days = Math.ceil((new Date(lic.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      return {
-        id: `lic-${lic.id}`,
-        title: `Ліцензія ${lic.name}`,
-        category: lic.softwareType || 'Software',
-        date: days < 0 ? `Прострочено на ${Math.abs(days)} днів` : `Через ${days} днів`,
-        importance: days < 7 ? 'Critical' : 'Important'
-      };
-    });
-
-    const stats = {
-      total: Number(totalResult[0]?.count || 0),
-      byStatus: statusResult.reduce((acc: any, row: any) => {
-        acc[row.status] = Number(row.count);
-        return acc;
-      }, {}),
-      byCategory: categoryResult.reduce((acc: any, row: any) => {
-        acc[row.category] = Number(row.count);
-        return acc;
-      }, {}),
-      recentAssets: formattedRecentAssets,
-      totalValue: Number(totalValueResult[0]?.totalValue || 0),
-      licenseUsage,
-      openTickets: Number(ticketsResult[0]?.count || 0),
-      recentTickets: recentTicketsResult,
-      systemAlerts
-    };
-
-    return NextResponse.json(stats);
-  } catch (error) {
-    console.error('Stats GET Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch statistics' }, { status: 500 });
-  }
-}
+import { neon } from '@neondatabase/serverless';import { NextResponse } from 'next/server';export const dynamic = 'force-dynamic';const sql = neon(process.env.DATABASE_URL!);export async function GET() {  try {    const [      totalResult,       statusResult,       categoryResult,       recentResult,      totalValueResult,      licenseResult,      ticketsResult,      recentTicketsResult,      expiringLicensesResult    ] = await Promise.all([      sql`SELECT COUNT(*) as count FROM assets`,      sql`SELECT status, COUNT(*) as count FROM assets GROUP BY status`,      sql`SELECT category, COUNT(*) as count FROM assets GROUP BY category`,      sql`SELECT id, name, category, status, brand, model, "serialNumber" FROM assets ORDER BY "createdAt" DESC LIMIT 5`,      sql`SELECT SUM(price) as "totalValue" FROM assets`,      sql`SELECT SUM("usedSeats") as used, SUM("totalSeats") as total FROM licenses`,      sql`SELECT COUNT(*) as count FROM tickets WHERE status NOT IN ('Вирішено', 'Закрито', 'resolved')`,      sql`SELECT * FROM tickets WHERE status NOT IN ('Вирішено', 'Закрито', 'resolved') ORDER BY "createdAt" DESC LIMIT 3`,      sql`SELECT * FROM licenses WHERE "expirationDate" IS NOT NULL AND "expirationDate" < NOW() + INTERVAL '30 days' ORDER BY "expirationDate" ASC LIMIT 5`    ]);    const formattedRecentAssets = recentResult.map((asset: any) => ({      id: asset.id,      name: asset.name,      category: asset.category,      status: asset.status,      brand: asset.brand || (asset.name ? asset.name.split(' ')[0] : 'IT'),      model: asset.model || (asset.name ? asset.name.split(' ').slice(1).join(' ') : '-'),      serial_number: asset.serialNumber || 'S/N відсутній'    }));    const used = Number(licenseResult[0]?.used || 0);    const totalLicenses = Number(licenseResult[0]?.total || 0);    const licenseUsage = totalLicenses > 0 ? Math.round((used / totalLicenses) * 100) : 0;    const systemAlerts = expiringLicensesResult.map((lic: any) => {      const days = Math.ceil((new Date(lic.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));      return {        id: `lic-${lic.id}`,        title: `Ліцензія ${lic.name}`,        category: lic.softwareType || 'Software',        date: days < 0 ? `Прострочено на ${Math.abs(days)} днів` : `Через ${days} днів`,        importance: days < 7 ? 'Critical' : 'Important'      };    });    const stats = {      total: Number(totalResult[0]?.count || 0),      byStatus: statusResult.reduce((acc: any, row: any) => {        acc[row.status] = Number(row.count);        return acc;      }, {}),      byCategory: categoryResult.reduce((acc: any, row: any) => {        acc[row.category] = Number(row.count);        return acc;      }, {}),      recentAssets: formattedRecentAssets,      totalValue: Number(totalValueResult[0]?.totalValue || 0),      licenseUsage,      openTickets: Number(ticketsResult[0]?.count || 0),      recentTickets: recentTicketsResult,      systemAlerts    };    return NextResponse.json(stats);  } catch (error) {    console.error('Stats GET Error:', error);    return NextResponse.json({ error: 'Failed to fetch statistics' }, { status: 500 });  }}

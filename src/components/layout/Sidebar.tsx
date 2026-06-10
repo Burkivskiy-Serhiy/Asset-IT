@@ -1,5 +1,4 @@
 'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -18,7 +17,6 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-
 const menuItems = [
   { 
     group: 'Головне меню',
@@ -50,17 +48,13 @@ const menuItems = [
     ]
   }
 ];
-
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  
   if (pathname === '/login') {
     return null;
   }
-
   const userRole = (session?.user as any)?.role || 'guest';
-
   return (
     <aside className="w-[260px] h-screen bg-card border-r border-border flex flex-col sticky top-0 z-50">
       <div className="px-6 h-24 flex items-center gap-3 border-b border-border">
@@ -71,13 +65,10 @@ export default function Sidebar() {
           Asset<span className="text-primary">-IT</span>
         </span>
       </div>
-      
       <nav className="flex-1 overflow-y-auto custom-scrollbar py-6 flex flex-col gap-6">
         {menuItems.map((group, idx) => {
           const groupItems = group.items.filter(item => item.allowedRoles.includes(userRole));
-          
           if (groupItems.length === 0) return null;
-
           return (
             <div key={idx} className="px-4">
               <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">

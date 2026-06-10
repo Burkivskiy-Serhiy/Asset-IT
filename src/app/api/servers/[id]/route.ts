@@ -1,84 +1,1 @@
-export const dynamic = 'force-dynamic';
-import { neon } from '@neondatabase/serverless';
-import { NextResponse } from 'next/server';
-import { sendServerAlert } from '@/lib/slack';
-import { prisma } from '@/lib/prisma';
-import { logAction } from '@/lib/logger';
-
-const sql = neon(process.env.DATABASE_URL!);
-
-export async function PUT(req: Request, { params }: { params: any }) {
-  try {
-    const resolvedParams = await params;
-    const id = resolvedParams.id;
-
-    console.log(`Спроба оновлення сервера з ID: ${id}`);
-
-    const body = await req.json();
-    const { name, ip, type, status, cpu, ram, uptime } = body;
-
-    const updatedServer = await sql`
-      UPDATE servers 
-      SET 
-        name = ${name}, 
-        ip = ${ip}, 
-        type = ${type}, 
-        status = ${status}, 
-        cpu = ${cpu}, 
-        ram = ${ram}, 
-        uptime = ${uptime}
-      WHERE id = ${id}
-      RETURNING *;
-    `;
-
-    if (updatedServer.length === 0) {
-      return NextResponse.json({ error: 'Сервер не знайдено' }, { status: 404 });
-    }
-
-    // Відправка Slack повідомлення при падінні
-    if (status === 'Offline' || status === 'Critical') {
-      try {
-        const settings = await prisma.systemSettings.findFirst();
-        if (settings?.slackNotif && settings?.slackWebhook) {
-          // Send alert only if the server wasn't already offline (to prevent spam)
-          // Since we already updated it, we can't easily check previous state without another query,
-          // but for simplicity we alert on any PUT that sets it to Offline
-          await sendServerAlert(settings.slackWebhook, updatedServer[0]);
-        }
-      } catch (slackErr) {
-        console.error('Slack Server Alert Error:', slackErr);
-      }
-    }
-
-    await logAction('Система', 'info', 'Сервери', `Оновлено сервер: ${name}`);
-    return NextResponse.json(updatedServer[0]);
-  } catch (error: any) {
-    console.error('Server PUT Error:', error);
-    return NextResponse.json({ error: 'Помилка оновлення сервера' }, { status: 500 });
-  }
-}
-
-export async function DELETE(req: Request, { params }: { params: any }) {
-  try {
-    const resolvedParams = await params;
-    const id = resolvedParams.id;
-
-    console.log(`Спроба видалення сервера з ID: ${id}`);
-
-    const deletedServer = await sql`
-      DELETE FROM servers 
-      WHERE id = ${id}
-      RETURNING *;
-    `;
-
-    if (deletedServer.length === 0) {
-      return NextResponse.json({ error: 'Сервер не знайдено' }, { status: 404 });
-    }
-
-    await logAction('Система', 'warning', 'Сервери', `Видалено сервер ID: ${id}`);
-    return NextResponse.json({ message: 'Сервер успішно видалено' });
-  } catch (error: any) {
-    console.error('Server DELETE Error:', error);
-    return NextResponse.json({ error: 'Помилка видалення сервера' }, { status: 500 });
-  }
-}
+export const dynamic = 'force-dynamic';import { neon } from '@neondatabase/serverless';import { NextResponse } from 'next/server';import { sendServerAlert } from '@/lib/slack';import { prisma } from '@/lib/prisma';import { logAction } from '@/lib/logger';const sql = neon(process.env.DATABASE_URL!);export async function PUT(req: Request, { params }: { params: any }) {  try {    const resolvedParams = await params;    const id = resolvedParams.id;    console.log(`Спроба оновлення сервера з ID: ${id}`);    const body = await req.json();    const { name, ip, type, status, cpu, ram, uptime } = body;    const updatedServer = await sql`      UPDATE servers       SET         name = ${name},         ip = ${ip},         type = ${type},         status = ${status},         cpu = ${cpu},         ram = ${ram},         uptime = ${uptime}      WHERE id = ${id}      RETURNING *;    `;    if (updatedServer.length === 0) {      return NextResponse.json({ error: 'Сервер не знайдено' }, { status: 404 });    }    if (status === 'Offline' || status === 'Critical') {      try {        const settings = await prisma.systemSettings.findFirst();        if (settings?.slackNotif && settings?.slackWebhook) {          await sendServerAlert(settings.slackWebhook, updatedServer[0]);        }      } catch (slackErr) {        console.error('Slack Server Alert Error:', slackErr);      }    }    await logAction('Система', 'info', 'Сервери', `Оновлено сервер: ${name}`);    return NextResponse.json(updatedServer[0]);  } catch (error: any) {    console.error('Server PUT Error:', error);    return NextResponse.json({ error: 'Помилка оновлення сервера' }, { status: 500 });  }}export async function DELETE(req: Request, { params }: { params: any }) {  try {    const resolvedParams = await params;    const id = resolvedParams.id;    console.log(`Спроба видалення сервера з ID: ${id}`);    const deletedServer = await sql`      DELETE FROM servers       WHERE id = ${id}      RETURNING *;    `;    if (deletedServer.length === 0) {      return NextResponse.json({ error: 'Сервер не знайдено' }, { status: 404 });    }    await logAction('Система', 'warning', 'Сервери', `Видалено сервер ID: ${id}`);    return NextResponse.json({ message: 'Сервер успішно видалено' });  } catch (error: any) {    console.error('Server DELETE Error:', error);    return NextResponse.json({ error: 'Помилка видалення сервера' }, { status: 500 });  }}

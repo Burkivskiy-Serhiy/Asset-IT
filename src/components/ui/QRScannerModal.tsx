@@ -2,18 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { X, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
 interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScan: (decodedText: string) => void;
 }
-
 export default function QRScannerModal({ isOpen, onClose, onScan }: QRScannerModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const html5QrCode = useRef<Html5Qrcode | null>(null);
-
   useEffect(() => {
     if (isOpen) {
       setError(null);
@@ -21,19 +18,16 @@ export default function QRScannerModal({ isOpen, onClose, onScan }: QRScannerMod
     } else {
       stopScanner();
     }
-
     return () => {
       stopScanner();
     };
   }, [isOpen]);
-
   const startScanner = async () => {
     try {
       html5QrCode.current = new Html5Qrcode("qr-reader");
       setIsScanning(true);
-      
       await html5QrCode.current.start(
-        { facingMode: "environment" }, // Prefer back camera
+        { facingMode: "environment" }, 
         {
           fps: 10,
           qrbox: { width: 250, height: 250 },
@@ -44,7 +38,6 @@ export default function QRScannerModal({ isOpen, onClose, onScan }: QRScannerMod
           onScan(decodedText);
         },
         (errorMessage) => {
-          // Ignore frequent "not found" errors during active scanning
         }
       );
     } catch (err: any) {
@@ -53,7 +46,6 @@ export default function QRScannerModal({ isOpen, onClose, onScan }: QRScannerMod
       setIsScanning(false);
     }
   };
-
   const stopScanner = () => {
     if (html5QrCode.current && html5QrCode.current.isScanning) {
       html5QrCode.current.stop().then(() => {
@@ -62,12 +54,10 @@ export default function QRScannerModal({ isOpen, onClose, onScan }: QRScannerMod
     }
     setIsScanning(false);
   };
-
   const handleClose = () => {
     stopScanner();
     onClose();
   };
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -87,7 +77,6 @@ export default function QRScannerModal({ isOpen, onClose, onScan }: QRScannerMod
                 <X size={18} />
               </button>
             </div>
-
             <div className="p-6 flex flex-col items-center justify-center bg-black/40">
               {error ? (
                 <div className="text-red-400 text-center py-10 px-4 bg-red-500/10 rounded-xl border border-red-500/20">
@@ -96,15 +85,11 @@ export default function QRScannerModal({ isOpen, onClose, onScan }: QRScannerMod
                 </div>
               ) : (
                 <div className="relative w-full aspect-square max-w-[300px] mx-auto rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                  {/* Container for html5-qrcode */}
                   <div id="qr-reader" className="w-full h-full bg-black"></div>
-                  
-                  {/* Decorative Scanner Overlay */}
                   <div className="absolute inset-0 pointer-events-none border-2 border-primary/30 rounded-xl"></div>
                   <div className="absolute top-1/2 left-0 w-full h-0.5 bg-primary/50 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
                 </div>
               )}
-              
               <p className="text-gray-400 text-sm mt-6 text-center">
                 Наведіть камеру на QR-код або штрих-код активу для його автоматичного пошуку.
               </p>

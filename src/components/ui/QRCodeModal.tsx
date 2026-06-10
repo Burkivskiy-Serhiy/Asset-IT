@@ -2,27 +2,20 @@ import React, { useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
 interface QRCodeModalProps {
   isOpen: boolean;
   onClose: () => void;
   asset: any | null;
 }
-
 export default function QRCodeModal({ isOpen, onClose, asset }: QRCodeModalProps) {
   const qrRef = useRef<HTMLDivElement>(null);
-
   if (!isOpen || !asset) return null;
-
   const qrValue = asset.inventoryId || asset.id;
-
   const handlePrint = () => {
     const printContent = qrRef.current;
     if (!printContent) return;
-
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-
     printWindow.document.write(`
       <html>
         <head>
@@ -67,7 +60,6 @@ export default function QRCodeModal({ isOpen, onClose, asset }: QRCodeModalProps
     `);
     printWindow.document.close();
   };
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -84,18 +76,15 @@ export default function QRCodeModal({ isOpen, onClose, asset }: QRCodeModalProps
                 <X size={18} />
               </button>
             </div>
-
             <div className="p-8 flex flex-col items-center">
               <div ref={qrRef} className="bg-white p-4 rounded-xl shadow-inner mb-6">
                 <QRCodeSVG value={qrValue} size={200} level="H" />
               </div>
-              
               <div className="text-center mb-6">
                 <h4 className="text-lg font-bold text-white mb-1">{asset.name}</h4>
                 <p className="text-sm text-gray-400 mb-0.5">S/N: {asset.serial_number || 'Не вказано'}</p>
                 <p className="text-sm text-gray-400">INV: {asset.inventoryId}</p>
               </div>
-
               <button 
                 onClick={handlePrint}
                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/80 hover:to-blue-500 text-white py-2.5 rounded-lg font-medium transition-all shadow-lg shadow-primary/20"
