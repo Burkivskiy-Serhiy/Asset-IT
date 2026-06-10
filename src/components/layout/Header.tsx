@@ -41,7 +41,7 @@ export default function Header() {
           // Запускаємо перевірки ліцензій та щоденний звіт паралельно
           await Promise.allSettled([
             fetch('/api/cron/check-licenses'),
-            fetch('/api/cron/check-warranties'),
+            fetch('/api/cron/check-licenses/check-warranties'),
             fetch('/api/cron/daily-digest')
           ]);
           localStorage.setItem('license_check_date', today);

@@ -34,8 +34,8 @@ const handler = NextAuth({
             }
           });
 
-          if (user) {
-           const passwordsMatch = inputPassword === user.password;
+           if (user) {
+            const passwordsMatch = await bcrypt.compare(inputPassword, user.password);
 
             if (passwordsMatch) {
               const logTime = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
