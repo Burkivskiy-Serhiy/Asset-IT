@@ -36,7 +36,6 @@ export default withAuth(
       path.startsWith("/api/maintenance") ||
       path.startsWith("/api/employees") ||
       path.startsWith("/api/servers") ||
-      path.startsWith("/api/stats") ||
       (path.startsWith("/api/assets") && req.method !== "GET") ||
       (path.startsWith("/api/tickets") && req.method !== "GET" && req.method !== "POST")
     ) {
